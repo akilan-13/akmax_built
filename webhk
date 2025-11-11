@@ -1,0 +1,416 @@
+<?php
+namespace App\Http\Controllers\WebHookHandler;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\NewsBroadcastModel; // sub-epr model (set primaryKey sno)
+use App\Models\DepartmentModel; 
+use App\Models\DivisionModel; 
+use App\Models\JobpositionModel; 
+use App\Models\StaffModel; 
+use App\Models\User; 
+use App\Models\StaffWorkInfoModel; 
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+
+class WebhookReceiverController extends Controller
+{
+    public function broadcastMessage(Request $request)
+    {
+        // optional: verify signature & timestamp using env('WEBHOOK_SECRET')
+        $uuid = $request->header('X-IDEMPOTENCY-KEY') ?? $request->input('uuid') ?? (string) Str::uuid();
+
+        // use updateOrCreate by external uuid (make sure broadcast table has external_uuid column)
+        $payload = $request->all();
+        $payload['external_uuid'] = $uuid;
+
+        $up = NewsBroadcastModel::updateOrCreate(
+            ['external_uuid' => $uuid],
+            array_merge($payload, ['updated_by' => 0])
+        );
+
+        return response()->json(['ok' => true, 'sno' => $up->sno], 200);
+    }
+    
+    public function StaffData(){
+       $staffdata=DB::table('et_staff')
+       ->select('et_staff.*','et_department.department_name','et_division.division_name')
+       ->where('et_staff.branch_id',1)
+       ->leftJoin('et_department', 'et_staff.department_id', '=', 'et_department.sno')
+       ->leftJoin('et_division', 'et_division.sno', '=', 'et_staff.sub_department_id')
+       ->where('et_staff.status',0)
+       ->where('et_staff.sno','>',1)
+       ->where('et_staff.department_id','!=',10)
+       ->get();
+       
+       foreach($staffdata as $staff){
+           if($staff->staff_image){
+               $staff->staff_image= url('staff_images/' . $staff->staff_image);
+           }else{
+               $staff->staff_image='';
+           }
+           
+       }
+       
+       return response()->json(['status' => 200, 'data' => $staffdata], 200);
+    }
+    
+    // Deparment List
+    public function DepartmentList(){
+       $departmentList=DB::table('et_department')
+       ->select('et_department.*')
+       ->where('et_department.entity_id',1)
+       ->where('et_department.status',0)
+       ->get();
+       $lastId = DB::table('et_department')
+        ->orderBy('sno', 'desc')   
+        ->value('sno');
+
+        $nextId = $lastId ? $lastId + 1 : 1; 
+       return response()->json(['status' => 200, 'data' => $departmentList,'nextId' =>$nextId], 200);
+    }
+    
+     // Division List
+    public function DivisionList(Request $request){
+        
+        $depart_id = $request->department_id;
+        // return $depart_id;
+       $departmentList=DB::table('et_division')
+       ->select('et_division.*')
+       ->where('et_division.department_id',$depart_id)
+       ->where('et_division.status',0)
+       ->get();
+       $lastId = DB::table('et_division')
+        ->orderBy('sno', 'desc')   
+        ->value('sno');
+
+        $nextId = $lastId ? $lastId + 1 : 1; 
+       return response()->json(['status' => 200, 'data' => $departmentList,'nextId' =>$nextId], 200);
+    }
+    
+    public function JobPostionList(Request $request){
+        
+        $division_id = $request->division_id;
+        // return $depart_id;
+       $departmentList=DB::table('et_job_position')
+       ->select('et_job_position.*')
+       ->where('et_job_position.division_id',$division_id)
+       ->where('et_job_position.status',0)
+       ->get();
+       $lastId = DB::table('et_job_position')
+        ->orderBy('sno', 'desc')   
+        ->value('sno');
+
+        $nextId = $lastId ? $lastId + 1 : 1; 
+       return response()->json(['status' => 200, 'data' => $departmentList,'nextId' =>$nextId], 200);
+    }
+    
+
+    // UserRoleList
+    public function userRoleList(Request $request)
+    {
+        $auth_key = $request->auth_key;
+        $verify_key = 'egcsecret2030datagetapierp';
+
+        if ($auth_key !== $verify_key) {
+            return response()->json([
+                'status' => 410,
+                'data' => null,
+                'message' => 'Unauthorized Entry'
+            ], 410);
+        }
+
+        $departmentList = DB::table('et_user_role')
+            ->select('et_user_role.*')
+            ->where('et_user_role.entity_id', 1)
+            ->where('et_user_role.status', 0)
+            ->get();
+
+        $lastId = DB::table('et_user_role')
+            ->orderBy('sno', 'desc')
+            ->value('sno');
+
+        $nextId = $lastId ? $lastId + 1 : 1;
+
+        return response()->json([
+            'status' => 200,
+            'data' => $departmentList,
+            'nextId' => $nextId
+        ], 200);
+    }
+
+    
+    // Insert Data
+    public function DepartmentHook(Request $request)
+    {
+        // optional: verify signature & timestamp using env('WEBHOOK_SECRET')
+        $uuid = $request->header('X-IDEMPOTENCY-KEY') ?? $request->input('uuid') ?? (string) Str::uuid();
+
+         $payload = $request->all();
+
+        $department = DepartmentModel::updateOrCreate(
+            ['external_uuid' => $uuid],  // ✅ match by UUID, not ERP id
+            [
+                'department_id'    => $payload['department_id'], 
+                'entity_id'        => 1,
+                'branch_id'        => 1,
+                'department_name'  => $payload['department_name'],
+                'department_desc'  => $payload['department_desc'] ?? null,
+                'created_by'       => $payload['created_by']
+            ]
+        );
+    
+        return response()->json([
+            'ok'  => true,
+            'sno' => $department->sno, // auto-increment from your DB
+        ], 200);
+    }
+    
+     public function DivisionHook(Request $request)
+    {
+        // optional: verify signature & timestamp using env('WEBHOOK_SECRET')
+        $uuid = $request->header('X-IDEMPOTENCY-KEY') ?? $request->input('uuid') ?? (string) Str::uuid();
+
+         $payload = $request->all();
+
+        $department = DivisionModel::updateOrCreate(
+            ['external_uuid' => $uuid],  // ✅ match by UUID, not ERP id
+            [
+                'department_id'    => $payload['erp_department_id'], 
+                'entity_id'        => 1,
+                'branch_id'        => 1,
+                'division_name'  => $payload['division_name'],
+                'division_desc'  => $payload['division_desc'] ?? null,
+                'created_by'       => 1,
+                'updated_by'       => 1
+            ]
+        );
+    
+        return response()->json([
+            'ok'  => true,
+            'sno' => $department->sno, // auto-increment from your DB
+        ], 200);
+    }
+    
+    
+      public function JobPositionHook(Request $request)
+    {
+        // optional: verify signature & timestamp using env('WEBHOOK_SECRET')
+        $uuid = $request->header('X-IDEMPOTENCY-KEY') ?? $request->input('uuid') ?? (string) Str::uuid();
+
+         $payload = $request->all();
+         
+         $category_check = JobpositionModel::where('status', '!=', 2)->orderBy('sno', 'desc')->first();
+
+            if (!$category_check) {
+    
+              $year = substr(date("y"), -2);
+              $job_position_id = "JP-0001/" . $year;
+            } else {
+    
+              $data = $category_check->job_position_id;
+              $slice = explode("/", $data);
+              $result = preg_replace('/[^0-9]/', '', $slice[0]);
+    
+              $next_number = (int) $result + 1;
+              $request = sprintf("JP-%04d", $next_number);
+    
+              $year = substr(date("y"), -2);
+              $job_position_id = $request . '/' . $year;
+            }
+
+        $department = JobpositionModel::updateOrCreate(
+            ['external_uuid' => $uuid],  // ✅ match by UUID, not ERP id
+            [
+                'job_position_id'    => $job_position_id, 
+                'department_id'    => $payload['erp_department_id'], 
+                'division_id'    => $payload['erp_division_id'], 
+                'branch_id'        => 1,
+                'job_position_name'  => $payload['job_position_name'],
+                'job_position_desc'  => $payload['job_position_desc'] ?? null,
+                'per_hour_cost'  => $payload['per_hour_cost'] ?? 0,
+                'created_by'       => 1,
+                'updated_by'       => 1
+            ]
+        );
+    
+        return response()->json([
+            'ok'  => true,
+            'sno' => $department->sno, // auto-increment from your DB
+        ], 200);
+    }
+
+        public function StaffAddHook(Request $request)
+        {
+            // Generate or get UUID
+            $uuid = $request->header('X-IDEMPOTENCY-KEY') ?? $request->input('uuid') ?? (string) Str::uuid();
+                 // Retrieve the payload and decode it
+    $payload = $request->all();
+            // Check if the payload contains a JSON-encoded string (as your logs suggest)
+    if (is_array($payload) && count($payload) === 1 && is_string($payload[0])) {
+        $payload = json_decode($payload[0], true);  // Decode JSON string into an associative array
+    }
+
+    // Log the decoded payload
+    \Log::info('Decoded Payload:', $payload);
+
+    // Validate payload
+    if (empty($payload)) {
+        return response()->json([
+            'ok' => false,
+            'message' => 'Payload is required'
+        ], 400);
+    }
+
+    // Check if mobile number exists
+    if (empty($payload['mobile_no'])) {
+        return response()->json([
+            'ok' => false,
+            'message' => 'Mobile number is missing'
+        ], 400);
+    }
+
+    // Check if mobile number already exists
+    $existingStaff = StaffModel::where('mobile_no', $payload['mobile_no'])->first();
+    if ($existingStaff) {
+        return response()->json([
+            'ok' => false,
+            'message' => 'Mobile Number already exists'
+        ], 409);
+    }
+
+    // Handle staff image upload (if any)
+    $staff_image_url = $payload['staff_image'] ?? null;
+    $staff_image = null;
+
+    if ($staff_image_url) {
+        $ext = pathinfo(parse_url($staff_image_url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
+        $folderPath = public_path("staff_images");
+
+        // Create directory if it doesn't exist
+        if (!File::exists($folderPath)) {
+            File::makeDirectory($folderPath, 0777, true, true);
+        }
+
+        // Find the next available image number
+        $existingFiles = File::files($folderPath);
+        $maxNumber = 0;
+        foreach ($existingFiles as $file) {
+            if (preg_match('/staff_image_(\d+)\./', $file->getFilename(), $matches)) {
+                $num = (int) $matches[1];
+                if ($num > $maxNumber) $maxNumber = $num;
+            }
+        }
+        $nextNumber = $maxNumber + 1;
+        $staff_image_name = "staff_image_{$nextNumber}.{$ext}";
+        $savePath = $folderPath . '/' . $staff_image_name;
+
+        // Save image
+        try {
+            $imageData = @file_get_contents($staff_image_url);
+            if ($imageData !== false) {
+                file_put_contents($savePath, $imageData);
+                $staff_image = $staff_image_name;
+            }
+        } catch (\Exception $e) {
+            $staff_image = null;
+        }
+    }
+
+            // Create or update staff record based on UUID
+            $add_staff = StaffModel::updateOrCreate(
+                ['external_uuid' => $uuid],
+                [
+                    'staff_id' => $payload['staff_id'],
+                    'branch_id' => 1,
+                    'entity_id' => 1,
+                    'shift_time_id' => 1,
+                    'multi_branch_access' => null,
+                    'sub_department_id' => $payload['sub_department_id'] ?? 0,
+                    'department_id' => $payload['department_id'] ?? 0,
+                    'role_id' => $payload['role_id'],
+                    'exp_type' => $payload['exp_type'],
+                    'staff_name' => $payload['staff_name'],
+                    'mobile_no' => $payload['mobile_no'],
+                    'alternative_no' => $payload['alternative_no'] ?? null,
+                    'email_id' => $payload['email_id'],
+                    'gender' => $payload['gender'],
+                    'dob' => $payload['dob'],
+                    'date_of_joining' => $payload['date_of_joining'],
+                    'contact_person_name' => $payload['contact_person_name'] ?? null,
+                    'contact_person_no' => $payload['contact_person_no'] ?? null,
+                    'martial_status' => $payload['martial_status'],
+                    'address' => $payload['address'] ?? null,
+                    'staff_image' => $staff_image ?? null,
+                    'attachment' => !empty($payload['attachment'])? json_encode($payload['attachment']): null,
+                    'nick_name' => $payload['nick_name'] ?? null,
+                    'position_role' => $payload['position_role'] ?? null,
+                    'description' => $payload['description'] ?? null,
+                    'basic_salary' => $payload['basic_salary'] ?? null,
+                    'per_hour_cost' => $payload['per_hour_cost'] ?? null,
+                    'login_access' => 1,
+                    'employee_skill_id' => 1, // Default value for now
+                    'user_name' => $payload['user_name'],
+                    'password' => $payload['password'],
+                    'created_by' => $request->user()->user_id ?? 1,
+                    'updated_by' => $request->user()->user_id ?? 1,
+                ]
+            );
+
+            if ($add_staff) {
+                // Create user credentials if not exists
+                $existingUser = User::where('user_id', $add_staff->sno)->first();
+                if (!$existingUser) {
+                    User::create([
+                        'user_id' => $add_staff->sno,
+                        'role_id' => $add_staff->role_id ?? 0,
+                        'branch_id' => $add_staff->branch_id,
+                        'entity_id' => $add_staff->entity_id,
+                        'name' => $add_staff->user_name,
+                        'password' => Hash::make($add_staff->password),
+                        'email' => $add_staff->email_id,
+                        'created_by' => $request->user()->user_id ?? 1,
+                        'updated_by' => $request->user()->user_id ?? 1,
+                    ]);
+                }
+
+                // Handle work experience (if applicable)
+                if ($payload['exp_type'] == 2 && !empty($payload['work_company_name'])) {
+                    foreach ($payload['work_company_name'] as $key => $company) {
+                        // Avoid duplicate work entries for same staff
+                        $existingWork = StaffWorkInfoModel::where('staff_id', $add_staff->sno)
+                            ->where('company_name', $company)
+                            ->where('position', $payload['work_position'][$key] ?? '')
+                            ->first();
+
+                        if (!$existingWork) {
+                            StaffWorkInfoModel::create([
+                                'staff_id' => $add_staff->sno,
+                                'staff_type' => $payload['exp_type'],
+                                'position' => $payload['work_position'][$key] ?? null,
+                                'year_of_experience' => $payload['work_exp_yrs'][$key] ?? 0,
+                                'company_name' => $company,
+                                'work_start_date' => isset($payload['work_st_date'][$key]) ? date('Y-m-d', strtotime($payload['work_st_date'][$key])) : null,
+                                'work_end_date' => isset($payload['work_end_date'][$key]) ? date('Y-m-d', strtotime($payload['work_end_date'][$key])) : null,
+                                'created_by' => $request->user()->user_id ?? 1,
+                                'updated_by' => $request->user()->user_id ?? 1,
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            return response()->json([
+                'ok' => true,
+                'sno' => $add_staff->sno,
+            ], 200);
+        }
+
+
+        
+
+    
+}
