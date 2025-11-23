@@ -18,7 +18,8 @@
 @endsection
 
 @section('page-script')
-    @vite(['resources/assets/js/forms-pickers.js'])
+    @vite(['resources/assets/js/forms-pickers.js']),
+     @vite(['resources/assets/js/forms_date_time_pickers.js'])
 @endsection
 
 @section('content')
@@ -164,7 +165,7 @@
                     <div class="d-flex flex-row align-items-center justify-content-between gap-2">
                         <ul class="nav nav-pills justify-content-end" role="tablist">
                             <li class="nav-item me-1">
-                                <a class="nav-link px-3" href="#" id="prevMonth">
+                                <a class="nav-link px-3" href="#" id="prevMonth" >
                                 <div class="text-center">
                                     <span class="mdi mdi-arrow-left-circle-outline fs-2"></span>
                                 </div>
@@ -178,7 +179,7 @@
                                 </a>
                             </li>
                             <li class="nav-item me-1">
-                                <a class="nav-link px-3" href="#" id="nextMonth">
+                                <a class="nav-link px-3" href="#" id="nextMonth" >
                                 <div class="text-center">
                                     <span class="mdi mdi-arrow-right-circle-outline fs-2"></span>
                                 </div>
@@ -186,21 +187,53 @@
                             </li>
                         </ul>
                     </div>
+                    <a href="javascript:;" class="btn btn-sm fw-bold btn-primary text-white" data-bs-toggle="modal" data-bs-target="#kt_modal_upload_essl"  data-bs-toggle="tooltip" data-bs-placement="bottom" title="Upload">
+                        <span class="me-2"><i class="mdi mdi-plus"></i></span>Upload ESSL
+                    </a>
                     <a href="javascript:;" class="btn btn-sm fw-bold btn-primary text-white" data-bs-toggle="dropdown"
                         aria-haspopup="true" aria-expanded="false">
                         <span class="me-2"><i class="mdi mdi-plus"></i></span>Add Attendance
                     </a>
                     <div class="dropdown-menu dropdown-menu-end" style="width: 200px;">
                         <a href="javascript:;" class="dropdown-item" data-bs-toggle="modal"
-                            data-bs-target="#kt_modal_attendance_present">Present</a>
+                            data-bs-target="#kt_modal_attendance_present">
+                            <span class="d-flex gap-2">
+                            <label class="badge bg-label-success text-black border border-success fw-bold px-3  py-1"><span>P</span></label>
+                            <span>Present</span>
+                            </span>
+                        </a>
                         <a href="javascript:;" class="dropdown-item" data-bs-toggle="modal"
-                            data-bs-target="#kt_modal_attendance_absent">Absent</a>
+                            data-bs-target="#kt_modal_attendance_absent">
+                            <span class="d-flex gap-2">
+                                <label class="badge bg-label-danger text-black border border-danger fw-bold px-3  py-1"><span>A</span></label>
+                                <span>Absent</span>
+                            </span>
+                        </a>
                         <a href="javascript:;" class="dropdown-item" data-bs-toggle="modal"
-                            data-bs-target="#kt_modal_attendance_leave">Leave</a>
+                            data-bs-target="#kt_modal_attendance_leave">
+                            <span class="d-flex gap-2">
+                                <label class="badge bg-label-warning text-black border border-warning fw-bold px-3  py-1"><span>L</span></label>
+                                <span>Leave</span>
+                            </span>
+                        </a>
                         <a href="javascript:;" class="dropdown-item" data-bs-toggle="modal"
-                            data-bs-target="#kt_modal_attendance_permission">Permission</a>
+                            data-bs-target="#kt_modal_attendance_permission">
+                            <span class="d-flex gap-2">
+                                <label><span class="badge text-black fw-bold px-3  py-1"
+                                style="background-color: #DCE2FC; border:1px solid #2856FA;">Pr</span></label>
+                                <span>Permission</span>
+                            </span>
+                        </a>
                         <a href="javascript:;" class="dropdown-item" data-bs-toggle="modal"
-                            data-bs-target="#kt_modal_attendance_onduty">On Duty</a>
+                            data-bs-target="#kt_modal_attendance_onduty">
+                            <span class="d-flex gap-2">
+                                <label>
+                                    <span class="badge text-black fw-bold px-3  py-1"
+                                        style="background-color: #EDD4FF; border:1px solid #9C2DEB">OD</span>
+                                </label>
+                                <span>On Duty</span>
+                            </span>
+                        </a>
                     </div>
                 </div>
                 <div class="d-flex justify-content-end align-items-center text-black gap-2">
@@ -210,15 +243,13 @@
                         <span class="fs-6 fw-semibold ms-1">Present</span>
                     </div>
                     <div class=" d-flex align-items-center justify-content-center me-3">
-                        <label
-                            class="badge bg-label-danger text-black border border-danger fw-bold px-3  py-1"><span>A</span></label>
+                        <label class="badge bg-label-danger text-black border border-danger fw-bold px-3  py-1"><span>A</span></label>
                         <span class="fs-6 fw-semibold ms-1">Absent</span>
                         <a href="javascipt:;" data-bs-toggle="tooltip" data-bs-placement="bottom"
                             title="Leave without intimation"><i class="mdi mdi mdi-information text-dark"></i></a>
                     </div>
                     <div class="d-flex align-items-center justify-content-center me-3">
-                        <label
-                            class="badge bg-label-warning text-black border border-warning fw-bold px-3  py-1"><span>L</span></label>
+                        <label class="badge bg-label-warning text-black border border-warning fw-bold px-3  py-1"><span>L</span></label>
                         <span class="fs-6 fw-semibold ms-1">Leave</span>
                         <a href="javascipt:;" data-bs-toggle="tooltip" data-bs-placement="bottom"
                             title="Leave with intimation"><i class="mdi mdi mdi-information text-dark"></i></a>
@@ -402,44 +433,12 @@
                                         </tr>
                                     </thead>
                                     <tbody class="text-black fw-semibold fs-7 attendance-body">
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center justify-content-start">
-                                                    <div class="avatar-xl mt-3">
-                                                        <img src="{{ asset('assets/egc_images/auth/user_3.png') }}" alt="user image"
-                                                            class="w-px-50 h-auto rounded-circle ">
-                                                    </div>
-                                                    <div
-                                                        class=" d-flex flex-column justify-content-between align-items-start gap-1">
-                                                        <a href="javascript:;" data-bs-toggle="modal"
-                                                            data-bs-target="#kt_modal_view_individual_staff_attendance">
-                                                            <span class="fs-7 me-1 text-black">Arun MK</span>
-                                                        </a>
-                                                        <span class="badge bg-warning text-white fs-8 me-1"
-                                                            data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                                            title="Department Name">Production</span>
-                                                        <div>
-                                                            <span class="badge bg-dark text-white fs-8"
-                                                                data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                                                title="Overall Percentage">96%</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                        <tr class="skeleton-loader" id="skeleton-loader" style="border-left: 5px solid #e2e2e2;">
+                                            <td class="skeleton-cell">
+                                                <div class="skeleton"></div>
                                             </td>
-
-                                            <td>
-                                                <span class="d-flex gap-1">
-                                                    <a href="javascript:;" data-bs-toggle="modal"
-                                                        data-bs-target="#kt_modal_view_attendance">
-                                                        <span data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                                            title="View"><i
-                                                                class="mdi mdi-eye fs-3 text-black me-1"></i></span>
-                                                    </a>
-                                                    <a href="javascript:;" data-bs-toggle="modal" data-bs-target="#kt_modal_edit">
-                                                    <span data-bs-toggle="tooltip" data-bs-placement="bottom" aria-label="Edit" data-bs-original-title="Edit"><i class="mdi mdi-square-edit-outline fs-3 text-black me-1"></i></span>
-                                                    </a>
-
-                                                </span>
+                                            <td class="skeleton-cell">
+                                                <div class="skeleton"></div>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -454,6 +453,81 @@
             </div>
         </div>
     </div>
+
+        <div class="modal fade" id="kt_modal_upload_essl" tabindex="-1" aria-hidden="true" data-bs-keyboard="false" data-bs-backdrop="static">
+          <!--begin::Modal dialog-->
+          <div class="modal-dialog modal-md">
+              <!--begin::Modal content-->
+              <div class="modal-content rounded">
+                  <!--begin::Modal header-->
+                  <div class="modal-header justify-content-end border-0 pb-0">
+                      <!--begin::Close-->
+                      <div class="btn btn-sm btn-icon btn-active-color-primary" data-bs-dismiss="modal">
+                          <!--begin::Svg Icon | path: icons/duotune/arrows/arr061.svg-->
+                          <span class="svg-icon svg-icon-1">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)" fill="currentColor" />
+                                  <rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="currentColor" />
+                              </svg>
+                          </span>
+                          <!--end::Svg Icon-->
+                      </div>
+                      <!--end::Close-->
+                  </div>
+                  <!--end::Modal header-->
+                  <!--begin::Modal body-->
+                  <div class="modal-body pt-0 pb-10 px-10 px-xl-20">
+                      <!--begin::Heading-->
+                      <div class="mb-4 text-center">
+                          <h3 class="text-center mb-4 text-black">Upload Documents</h3>
+                      </div>
+                      <div class="text-center">
+                          <span>
+                              <label class="badge bg-warning text-black rounded fw-bold" id="upload_chap_course_name"></label>
+                              <input type="hidden" name="upload_chap_course_id" id="upload_chap_course_id">
+                          </span>
+                      </div>
+                      <form id="uploadMaterialForm" method="POST" enctype="multipart/form-data" autocomplete="off">
+                          @csrf 
+                          <div class="row mt-2">
+                          
+                        
+                            <!-- File Upload -->
+                            <div class="col-lg-12 mb-3">
+                              <label class="text-dark mb-1 fs-6 fw-semibold">Documents<span class="text-danger">*</span></label>
+                              <div id="dropArea" class="border border-4 border-dashed p-5 text-center rounded">
+                                <p class="mb-2">Drag & Drop your files here or click to select</p>
+                                <input type="file" id="fileInput" name="file_upload" class="d-none"  />
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                                  Browse Files
+                                </button>
+                              </div>
+                              <div id="fileList" class="text-muted"></div>
+                              <div class="text-danger" id="err_mssg"></div>
+                            </div>
+                          </div>
+                        
+                          <!-- Footer -->
+                          <div class="row">
+                            <div class="d-flex justify-content-center align-items-center mt-4">
+                              <button type="reset" class="btn btn-secondary me-3" data-bs-dismiss="modal">Cancel</button>
+                              <div class="position-relative">
+                                <button type="submit" class="btn btn-primary" id="uploadButton">Upload</button>
+                                <div id="uploadLoader" class="import-loader d-none">
+                                  <div class="spinner-border text-light" role="status"></div>
+                                  <span class="ms-2"></span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </form>
+                  </div>
+                  <!--end::Modal body-->
+              </div>
+              <!--end::Modal content-->
+          </div>
+          <!--end::Modal dialog-->
+        </div>
 
     <!--begin::Modal -  Mark Present Attendance  -->
     <div class="modal fade" id="kt_modal_attendance_present" tabindex="-1" aria-hidden="true" data-bs-keyboard="false"
@@ -490,8 +564,10 @@
                 </div>
                 <!--end::Modal header-->
                 <!--begin::Modal body-->
+                <form id="attendanceForm">
                 <div class="modal-body pt-0 pb-10 px-10 px-xl-20">
                     <!--begin::Heading-->
+                     
                     <div class="row">
                         <div class="col-lg-6 mb-3">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Date</label>
@@ -499,52 +575,53 @@
                                 <span class="input-group-text bg-gray-200i">
                                   <i class="mdi mdi-calendar-month-outline fs-4"></i>
                                 </span>
-                                <input type="text" class="form-control" value="<?php echo date("d-M-Y"); ?>" disabled />
+                                <input type="text" class="form-control" value="<?php echo date("d-M-Y"); ?>" id="attend_date" name="attend_date" readonly />
                             </div>
                         </div>
                         <div class="col-lg-6 mb-3">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Company<span class="text-danger">*</span></label>
-                            <select class="select3 form-select" id="CompanyAbs">
+                            <select id="company_id_present" name="company_id" class="select3 form-select" >
                                 <option value="">Select Company</option>
-                                <option value="1">Elysium Technologies</option>
+                                <option value="egc">Elysium Groups of Companies</option>
+                                @if(isset($company_list))
+                                @foreach($company_list as $clist)
+                                    <option value="{{$clist->sno}}" >{{$clist->company_name}}</option>
+                                @endforeach
+                                @endif
                             </select>
+                             <div id="company_id_present_err" class="text-danger"></div>
                         </div>
-                        <div class="col-lg-6 mb-3">
+                        <div class="col-lg-6 mb-3 business_div" id="business_present">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Entity<span class="text-danger">*</span></label>
-                            <select class="select3 form-select" id="EntityAbs">
+                            <select class="select3 form-select" id="entity_id_present" name="entity_id" >
                                 <option value="">Select Entity</option>
-                                <option value="1">PhDiZone</option>
-                                <option value="2">EIBS</option>
-                                <option value="3">Academy</option>
+
                             </select>
+                            <div id="entity_id_present_err" class="text-danger"></div>
                         </div>
                         <div class="col-lg-6 mb-3">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Department<span class="text-danger">*</span></label>
-                            <select class="select3 form-select" placeholder="Select Department">
-                                <option value="1">All</option>
-                                <option value="1">Production</option>
-                                <option value="2">Sales</option>
-                                <option value="3">IS</option>
+                            <select class="select3 form-select" placeholder="Select Department" id="department_add" name="department_id">
+                                <option value="" >Select Department</option>
                             </select>
+                            <div id="department_add_err" class="text-danger"></div>
                         </div>
+                        <input type="hidden" class="form-control" name="entry_select" value="1"  />
                        <div class="col-lg-12 mb-3">
                           <div class="d-flex justify-content-between">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Staff<span class="text-danger">*</span></label>
                             <label id="staff-count" class="bg-primary text-white mb-1 fs-6 fw-semibold rounded px-3">0</label>
                           </div>
-                          <select class="select3 form-select" id="staffpresent" multiple>
-                            <option value="1" selected>Yasmin</option>
-                            <option value="2" selected>Vasan</option>
-                            <option value="3">Naveen</option>
+                          <select class="select3 form-select" id="staff_add" name="staff_id[]" multiple> 
                           </select>
                         </div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mt-4">
                         <button type="reset" class="btn btn-outline-danger text-primary me-3" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" id="create_sms_btn" class="btn btn-primary"
-                            data-bs-dismiss="modal">Mark Present Attendance</button>
+                        <button type="button" id="markPresentBtn" class="btn btn-primary" onclick="mark_present_att_func()">Mark Present Attendance</button>
                     </div>
                 </div>
+                </form>
                 <!--end::Modal body-->
             </div>
             <!--end::Modal content-->
@@ -589,9 +666,10 @@
                 </div>
                 <!--end::Modal header-->
                 <!--begin::Modal body-->
+                <form id="attendanceFormabsent">
                 <div class="modal-body pt-0 pb-10 px-10 px-xl-20">
                     <!--begin::Heading-->
-
+                    
                     <div class="row">
                           <div class="col-lg-6 mb-3">
                               <label class="text-dark mb-1 fs-6 fw-semibold">Date</label>
@@ -599,49 +677,50 @@
                                   <span class="input-group-text bg-gray-200i">
                                     <i class="mdi mdi-calendar-month-outline fs-4"></i>
                                   </span>
-                                  <input type="text" class="form-control" value="<?php echo date('d-M-Y'); ?>" disabled />
+                                  <input type="text" class="form-control" value="<?php echo date('d-M-Y'); ?>" id="attend_date_absent" name="attend_date" readonly />
                               </div>
                           </div>
+                          <input type="hidden" class="form-control" name="entry_select" value="2"  />
                           <div class="col-lg-6 mb-3">
-                              <label class="text-dark mb-1 fs-6 fw-semibold">Company<span  class="text-danger">*</span></label>
-                              <select class="select3 form-select" id="CompanyAbs">
-                                  <option value="">Select Company</option>
-                                  <option value="1">Elysium Technologies</option>
-                              </select>
-                          </div>
-                          <div class="col-lg-6 mb-3">
-                              <label class="text-dark mb-1 fs-6 fw-semibold">Entity<span class="text-danger">*</span></label>
-                              <select class="select3 form-select" id="EntityAbs">
-                                  <option value="">Select Entity</option>
-                                  <option value="1">PhDiZone</option>
-                                  <option value="2">EIBS</option>
-                                  <option value="3">Academy</option>
-                              </select>
-                          </div>
+                            <label class="text-dark mb-1 fs-6 fw-semibold">Company<span class="text-danger">*</span></label>
+                            <select id="company_id_absent" name="company_id" class="select3 form-select" >
+                                <option value="">Select Company</option>
+                                <option value="egc">Elysium Groups of Companies</option>
+                                @if(isset($company_list))
+                                @foreach($company_list as $clist)
+                                    <option value="{{$clist->sno}}" >{{$clist->company_name}}</option>
+                                @endforeach
+                                @endif
+                            </select>
+                             <div id="company_id_absent_err" class="text-danger"></div>
+                            </div>
+                            <div class="col-lg-6 mb-3 " id="business_absent">
+                                <label class="text-dark mb-1 fs-6 fw-semibold">Entity<span class="text-danger">*</span></label>
+                                <select class="select3 form-select" id="entity_id_absent" name="entity_id" >
+                                    <option value="">Select Entity</option>
+
+                                </select>
+                                <div id="entity_id_absent_err" class="text-danger"></div>
+                            </div>
                           <div class="col-lg-6 mb-3">
                               <label class="text-dark mb-1 fs-6 fw-semibold">Department<span class="text-danger">*</span></label>
-                              <select class="select3 form-select">
-                                  <option value="1">Select Department</option>
-                                  <option value="1">Production</option>
-                                  <option value="2">Sales</option>
-                                  <option value="3">IS</option>
+                              <select class="select3 form-select" id="department_add_absent" name="department_id" >
                               </select>
+                              <div id="department_add_absent_err" class="text-danger"></div>
                           </div>
                           <div class="col-lg-12 mb-3">
                             <div class="d-flex justify-content-between">
                               <label class="text-dark mb-1 fs-6 fw-semibold">Staff<span class="text-danger">*</span></label>
                               <label id="absent-count" class="bg-primary text-white mb-1 fs-6 fw-semibold rounded px-3">0</label>
                             </div>
-                            <select class="select3 form-select" id="staffabsent" multiple>
-                              <option value="1" selected>Yasmin</option>
-                              <option value="2" selected>Vasan</option>
-                              <option value="3">Naveen</option>
+                            <select class="select3 form-select" id="staff_add_absent" name="staff_id[]" multiple>
                             </select>
+                             <div id="staff_add_absent_err" class="text-danger"></div>
                           </div>
-                          <div class="col-lg-12 scroll-y d-flex flex-wrap gap-4 my-4" style="max-height: 150px">
-                              <!-- Staff Card -->
+                          <!-- <div class="col-lg-12 scroll-y d-flex flex-wrap gap-4 my-4" style="max-height: 150px">
+                             
                               <div class="team-card d-flex align-items-center p-2 rounded shadow-sm">
-                                <!-- Colored sidebar for role -->
+                              
                                 <div class="role-indicator bg-primary rounded-start d-flex align-items-center justify-content-center me-2">
                                   <span class="role-abbr text-white fw-bold">Y</span>
                                 </div>
@@ -660,19 +739,19 @@
                                   <div class="text-secondary fs-8">Sales Lead</div>
                                 </div>
                               </div>
-                          </div>
+                          </div> -->
 
                           <div class="col-lg-12 mb-3">
                               <label class="text-dark mb-1 fs-6 fw-semibold">Reason</label>
-                              <textarea class="form-control" rows="3" placeholder="Enter Reason"></textarea>
+                              <textarea class="form-control" rows="3"  name="reason" placeholder="Enter Reason"></textarea>
                           </div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mt-4">
                         <button type="reset" class="btn btn-outline-danger text-primary me-3" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" id="create_sms_btn" class="btn btn-primary"
-                            data-bs-dismiss="modal">Mark Absent Attendance</button>
+                        <button type="button" id="absentBtn" class="btn btn-primary" onclick="mark_absent_att_func()">Mark Absent Attendance</button>
                     </div>
                 </div>
+                </form>
                 <!--end::Modal body-->
             </div>
             <!--end::Modal content-->
@@ -718,49 +797,17 @@
                 <!--begin::Modal body-->
                 <div class="modal-body pt-0 pb-10 px-10 px-xl-20">
                     <!--begin::Heading-->
-
+                    <form id="attendanceFormleave">
                     <div class="row">
-                        <div class="col-lg-4 mb-3">
-                            <label class="text-dark mb-1 fs-6 fw-semibold">Company<span  class="text-danger">*</span></label>
-                            <select class="select3 form-select" id="CompanyL">
-                                <option value="">Select Company</option>
-                                <option value="1">Elysium Technologies</option>
-                            </select>
-                        </div>
-                        <div class="col-lg-4 mb-3">
-                            <label class="text-dark mb-1 fs-6 fw-semibold">Entity<span  class="text-danger">*</span></label>
-                            <select class="select3 form-select" id="EntityL">
-                                <option value="">Select Entity</option>
-                                <option value="1">PhDiZone</option>
-                                <option value="2">EIBS</option>
-                                <option value="3">Academy</option>
-                            </select>
-                        </div>
-                        <div class="col-lg-4 mb-3">
-                            <label class="text-dark mb-1 fs-6 fw-semibold">Department<span  class="text-danger">*</span></label>
-                            <select class="select3 form-select">
-                                <option value="1">Select Department</option>
-                                <option value="1">Production</option>
-                                <option value="2">Sales</option>
-                                <option value="3">IS</option>
-                            </select>
-                        </div>
-                        <div class="col-lg-4 mb-3">
-                            <label class="text-dark mb-1 fs-6 fw-semibold">Staff<span class="text-danger">*</span></label>
-                            <select class="select3 form-select" multiple>
-                                <option value="1">Select Staff</option>
-                                <option value="1" selected>Yasmin</option>
-                                <option value="2" selected>Vasan</option>
-                                <option value="3">Naveen</option>
-                            </select>
-                        </div>
                         <div class="col-lg-4 mb-3">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Attendance Type<span class="text-danger">*</span></label>
                             <select id="attendance_type_add" name="attendance_type_add" class="select3 form-select"  onchange="attendance_type_func_add()">
                                 <option value="today">Today</option>
                                 <option value="tomorrow">Tomorrow</option>
                                 <option value="custom">Custom</option>
+                                
                             </select>
+                            <div id="attendance_type_add_err" class="text-danger"></div>
                         </div>
                         <div class="col-lg-4 mb-3" id="attd_type_today_add" style="display: block;">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Today Date</label>
@@ -788,16 +835,48 @@
                         <div class="col-lg-4 mb-3" id="attd_type_custom_add" style="display: none;">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Custom Date<span  class="text-danger">*</span></label>
                             <div class="input-group input-group-merge">
-                                <span class="input-group-text">
-                                  <i class="mdi mdi-calendar-month-outline fs-4"></i>
-                                </span>
-                                <input type="text" id="custom_date_add" class="form-control"  value="<?php echo date('d-M-Y'); ?>" />
+                                <span class="input-group-text"><i class="mdi mdi-calendar-month-outline fs-4"></i></span>
+                                <input type="text" id="custom_date_add" name="attendance_date_range_add" placeholder="Select Date" class="form-control common_datepicker" readonly value="<?php echo date("d-M-Y"); ?>" />
                             </div>
                         </div>
-                        <div class="col-lg-12 scroll-y d-flex flex-wrap gap-4 my-4" style="max-height: 150px">
-                              <!-- Staff Card -->
+                        <div class="col-lg-4 mb-3">
+                            <label class="text-dark mb-1 fs-6 fw-semibold">Company<span  class="text-danger">*</span></label>
+                            <select id="company_id_leave" name="company_id" class="select3 form-select" >
+                                <option value="">Select Company</option>
+                                <option value="egc">Elysium Groups of Companies</option>
+                                @if(isset($company_list))
+                                @foreach($company_list as $clist)
+                                    <option value="{{$clist->sno}}" >{{$clist->company_name}}</option>
+                                @endforeach
+                                @endif
+                            </select>
+                             <div id="company_id_leave_err" class="text-danger"></div>
+                        </div>
+                        <div class="col-lg-4 mb-3" id="business_leave">
+                            <label class="text-dark mb-1 fs-6 fw-semibold">Entity<span  class="text-danger">*</span></label>
+                            <select class="select3 form-select" id="entity_id_leave" name="entity_id" >
+                                <option value="">Select Entity</option>
+
+                            </select>
+                            <div id="entity_id_leave_err" class="text-danger"></div>
+                        </div>
+                        <div class="col-lg-4 mb-3">
+                            <label class="text-dark mb-1 fs-6 fw-semibold">Department<span  class="text-danger">*</span></label>
+                            <select class="select3 form-select" id="department_add_leave" name="department_id" placeholder="Select Department Name">
+                            </select>
+                            <div id="department_add_leave_err" class="text-danger"></div>
+                        </div>
+                        <div class="col-lg-4 mb-3">
+                            <label class="text-dark mb-1 fs-6 fw-semibold">Staff<span class="text-danger">*</span></label>
+                            <select class="select3 form-select" id="staff_add_leave" name="staff_id[]" multiple placeholder="Select Staff">
+                            </select>
+                        </div>
+                        
+                        <input type="hidden" class="form-control" name="entry_select" value="5"  />
+                            <!-- <div class="col-lg-12 scroll-y d-flex flex-wrap gap-4 my-4" style="max-height: 150px">
+                            
                               <div class="team-card d-flex align-items-center p-2 rounded shadow-sm">
-                                <!-- Colored sidebar for role -->
+                         
                                 <div class="role-indicator bg-primary rounded-start d-flex align-items-center justify-content-center me-2">
                                   <span class="role-abbr text-white fw-bold">Y</span>
                                 </div>
@@ -816,17 +895,19 @@
                                   <div class="text-secondary fs-8">Sales Lead</div>
                                 </div>
                               </div>
-                          </div>
+                            </div> -->
 
                         <div class="col-lg-12 mb-3">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Reason<span   class="text-danger">*</span></label>
-                            <textarea class="form-control" rows="3" placeholder="Enter Reason"></textarea>
+                            <textarea class="form-control" rows="3" placeholder="Enter Reason" name="reason" id="reason_leave"></textarea>
+                             <div id="reason_leave_err" class="text-danger"></div>
                         </div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mt-4">
                         <button type="reset" class="btn btn-outline-danger text-primary me-3" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" id="create_sms_btn" class="btn btn-primary" data-bs-dismiss="modal">Mark Leave Attendance</button>
+                        <button type="button" id="leaveBtn" class="btn btn-primary" onclick="mark_leave_att_func()">Mark Leave Attendance</button>
                     </div>
+                    </form>
                 </div>
                 <!--end::Modal body-->
             </div>
@@ -875,42 +956,8 @@
                 <!--begin::Modal body-->
                 <div class="modal-body pt-0 pb-10 px-10 px-xl-20">
                     <!--begin::Heading-->
+                    <form id="attendanceFormpermission">
                     <div class="row">
-                        <div class="col-lg-4 mb-3">
-                            <label class="text-dark mb-1 fs-6 fw-semibold">Company<span class="text-danger">*</span></label>
-                            <select class="select3 form-select" id="CompanyPr">
-                                <option value="">Select Company</option>
-                                <option value="1">Elysium Technologies</option>
-                            </select>
-                        </div>
-                        <div class="col-lg-4 mb-3">
-                            <label class="text-dark mb-1 fs-6 fw-semibold">Entity<span class="text-danger">*</span></label>
-                            <select class="select3 form-select" id="EntityPr">
-                                <option value="">Select Entity</option>
-                                <option value="1">PhDiZone</option>
-                                <option value="2">EIBS</option>
-                                <option value="3">Academy</option>
-                            </select>
-                        </div>
-                        <div class="col-lg-4 mb-3">
-                            <label class="text-dark mb-1 fs-6 fw-semibold">Department<span  class="text-danger">*</span></label>
-                            <select class="select3 form-select">
-                                <option value="1">Select Department</option>
-                                <option value="1">Production</option>
-                                <option value="2">Sales</option>
-                                <option value="3">IS</option>
-                            </select>
-                        </div>
-                        <div class="col-lg-4 mb-3">
-                            <label class="text-dark mb-1 fs-6 fw-semibold">Staff<span  class="text-danger">*</span></label>
-                            <select class="select3 form-select">
-                                <option value="1">Select Staff</option>
-                                <option value="1" selected>Yasmin</option>
-                                <option value="2">Vasan</option>
-                                <option value="3">Naveen</option>
-                            </select>
-                        </div>
-
                         <div class="col-lg-4 mb-3">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Attendance Type<span  class="text-danger">*</span></label>
                             <select id="perm_attendance_type_add" name="perm_attendance_type_add"
@@ -920,24 +967,12 @@
                                 <option value="custom">Custom</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="row">
                         <div class="col-lg-4 mb-3" id="perm_attd_type_today_add" style="display: block;">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Today Date</label>
                             <div class="input-group input-group-merge">
                                 <span class="input-group-text bg-gray-200i"><i class="mdi mdi-calendar-month-outline fs-4"></i></span>
                                 <input type="text" class="form-control" value="<?php echo date('d-M-Y'); ?>" disabled />
                             </div>
-                        </div>
-                        <div class="col-lg-3 mb-3" id="perm_attd_type_today_st_time_add" style="display: block;">
-                            <label class="text-dark mb-1 fs-6 fw-semibold">Start Time<span  class="text-danger">*</span></label>
-                            <input class="form-control form-control-solid perm_attd_type_today_st_time_add"
-                                placeholder="Pick time" />
-                        </div>
-                        <div class="col-lg-3 mb-3" id="perm_attd_type_today_ed_time_add" style="display: block;">
-                            <label class="text-dark fs-6 mb-1 fw-semibold">End Time<span  class="text-danger">*</span></label>
-                            <input class="form-control form-control-solid perm_attd_type_today_ed_time_add"
-                                placeholder="Pick time" />
                         </div>
                         <div class="col-lg-4 mb-3" id="perm_attd_type_tomor_add" style="display: none;">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Tomorrow Date</label>
@@ -953,40 +988,75 @@
                                 <input type="text" class="form-control" value="<?php echo $perm_futureDate; ?>" disabled />
                             </div>
                         </div>
-                        <div class="col-lg-3 mb-3" id="perm_attd_type_tomor_st_time_add" style="display: none;">
-                            <label class="text-dark mb-1 fs-6 fw-semibold">Start Time<span  class="text-danger">*</span></label>
-                            <input class="form-control form-control-solid perm_attd_type_tomor_st_time_add"  placeholder="Pick time" />
-                        </div>
-                        <div class="col-lg-3 mb-3" id="perm_attd_type_tomor_ed_time_add" style="display: none;">
-                            <label class="text-dark fs-6 mb-1 fw-semibold">End Time<span  class="text-danger">*</span></label>
-                            <input class="form-control form-control-solid perm_attd_type_tomor_ed_time_add"  placeholder="Pick time" />
-                        </div>
                         <div class="col-lg-4 mb-3" id="perm_attd_type_custom_add" style="display: none;">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Custom Date<span  class="text-danger">*</span></label>
                             <div class="input-group input-group-merge">
                                 <span class="input-group-text">
                                   <i class="mdi mdi-calendar-month-outline fs-4"></i>
                                 </span>
-                                <input type="text" class="form-control common_date_class"value="<?php echo date('d-M-Y'); ?>" />
+                                <input type="text" class="form-control common_datepicker" id="custom_date_add_pr" name="attendance_date_range_add" value="<?php echo date('d-M-Y'); ?>" />
                             </div>
                         </div>
-                        <div class="col-lg-3 mb-3" id="perm_attd_type_custom_st_time_add" style="display: none;">
+                        <div class="col-lg-4 mb-3" id="perm_attd_type_custom_st_time_add" >
                             <label class="text-dark mb-1 fs-6 fw-semibold">Start Time<span class="text-danger">*</span></label>
-                            <input class="form-control form-control-solid perm_attd_type_custom_st_time_add"  placeholder="Pick time" />
+                            <input class="form-control form-control-solid perm_attd_type_custom_st_time_add common_timepicker" id="perm_st_time_add" name="st_time"  placeholder="Pick time" />
+                            <div id="perm_st_time_add_err" class="text-danger "></div>
                         </div>
-                        <div class="col-lg-3 mb-3" id="perm_attd_type_custom_ed_time_add" style="display: none;">
+                        <div class="col-lg-4 mb-3" id="perm_attd_type_custom_ed_time_add" >
                             <label class="text-dark fs-6 mb-1 fw-semibold">End Time<span  class="text-danger">*</span></label>
-                            <input class="form-control form-control-solid perm_attd_type_custom_ed_time_add"  placeholder="Pick time" />
+                            <input class="form-control form-control-solid perm_attd_type_custom_ed_time_add common_time_class" id="perm_ed_time_add" name="end_time" placeholder="Pick time" />
+                             <div id="perm_ed_time_add_err" class="text-danger"></div>
                         </div>
+                        <div class="col-lg-4 mb-3">
+                            <label class="text-dark mb-1 fs-6 fw-semibold">Company<span class="text-danger">*</span></label>
+                            <select id="company_id_pr" name="company_id" class="select3 form-select" >
+                                <option value="">Select Company</option>
+                                <option value="egc">Elysium Groups of Companies</option>
+                                @if(isset($company_list))
+                                @foreach($company_list as $clist)
+                                    <option value="{{$clist->sno}}" >{{$clist->company_name}}</option>
+                                @endforeach
+                                @endif
+                            </select>
+                             <div id="company_id_pr_err" class="text-danger"></div>
+                        </div>
+                        <div class="col-lg-4 mb-3" id="business_pr">
+                            <label class="text-dark mb-1 fs-6 fw-semibold">Entity<span class="text-danger">*</span></label>
+                            <select class="select3 form-select" id="entity_id_pr" name="entity_id" >
+                                <option value="">Select Entity</option>
+
+                            </select>
+                            <div id="entity_id_pr_err" class="text-danger"></div>
+                        </div>
+                        <input type="hidden" class="form-control" name="entry_select" value="4"  />
+                        <div class="col-lg-4 mb-3">
+                            <label class="text-dark mb-1 fs-6 fw-semibold">Department<span  class="text-danger">*</span></label>
+                            <select class="select3 form-select" id="department_add_pr" name="department_id" placeholder="Select Department Name">
+                            </select>
+                             <div id="department_add_pr_err" class="text-danger"></div>
+                        </div>
+                        <div class="col-lg-4 mb-3">
+                            <label class="text-dark mb-1 fs-6 fw-semibold">Staff<span  class="text-danger">*</span></label>
+                            <select class="select3 form-select" id="staff_add_pr" name="staff_id[]" multiple placeholder="Select Staff">
+                            </select>
+                            <div id="staff_add_pr_err" class="text-danger"></div>
+                        </div>
+
+                        
+                    </div>
+                    <div class="row">
+                        
                         <div class="col-lg-12 mb-3">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Reason<span  class="text-danger">*</span></label>
-                            <textarea class="form-control" rows="3" placeholder="Enter Reason"></textarea>
+                            <textarea class="form-control" rows="3" id="pr_reason" name="reason" placeholder="Enter Reason"></textarea>
+                            <div id="pr_reason_err" class="text-danger"></div>
                         </div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mt-4">
                         <button type="reset" class="btn btn-outline-danger text-primary me-3" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" id="create_sms_btn" class="btn btn-primary" data-bs-dismiss="modal">Mark Permission Attendance</button>
+                        <button type="button" id="prBtn" class="btn btn-primary" onclick="mark_pr_att_func()">Mark Permission Attendance</button>
                     </div>
+                    </form>
                 </div>
                 <!--end::Modal body-->
             </div>
@@ -1033,43 +1103,8 @@
                 <!--begin::Modal body-->
                 <div class="modal-body pt-0 pb-10 px-10 px-xl-20">
                     <!--begin::Heading-->
-
+                    <form id="attendanceFormonduty">
                     <div class="row">
-                        <div class="col-lg-4 mb-3">
-                            <label class="text-dark mb-1 fs-6 fw-semibold">Company<span class="text-danger">*</span></label>
-                            <select class="select3 form-select" id="CompanyON">
-                                <option value="">Select Company</option>
-                                <option value="1">Elysium Technologies</option>
-                            </select>
-                        </div>
-                        <div class="col-lg-4 mb-3">
-                            <label class="text-dark mb-1 fs-6 fw-semibold">Entity<span  class="text-danger">*</span></label>
-                            <select class="select3 form-select" id="EntityON">
-                                <option value="">Select Entity</option>
-                                <option value="1">PhDiZone</option>
-                                <option value="2">EIBS</option>
-                                <option value="3">Academy</option>
-                            </select>
-                        </div>
-                        <div class="col-lg-4 mb-3">
-                            <label class="text-dark mb-1 fs-6 fw-semibold">Department<span  class="text-danger">*</span></label>
-                            <select class="select3 form-select">
-                                <option value="1">Select Department</option>
-                                <option value="1">Production</option>
-                                <option value="2">Sales</option>
-                                <option value="3">IS</option>
-                            </select>
-                        </div>
-                        <div class="col-lg-4 mb-3">
-                            <label class="text-dark mb-1 fs-6 fw-semibold">Staff<span  class="text-danger">*</span></label>
-                            <select class="select3 form-select">
-                                <option value="1">Select Staff</option>
-                                <option value="1" selected>Yasmin</option>
-                                <option value="2">Vasan</option>
-                                <option value="3">Naveen</option>
-                            </select>
-                        </div>
-
                         <div class="col-lg-4 mb-3">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Attendance Type<span   class="text-danger">*</span></label>
                             <select id="onduty_attendance_type_add" name="onduty_attendance_type_add" class="select3 form-select" onchange="onduty_attendance_type_func_add()">
@@ -1078,8 +1113,6 @@
                                 <option value="custom">Custom</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="row">
                         <div class="col-lg-4 mb-3" id="onduty_attd_type_today_add" style="display: block;">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Today Date</label>
                             <div class="input-group input-group-merge">
@@ -1088,14 +1121,6 @@
                                 </span>
                                 <input type="text" class="form-control" value="<?php echo date('d-M-Y'); ?>" disabled />
                             </div>
-                        </div>
-                        <div class="col-lg-3 mb-3" id="onduty_attd_type_today_st_time_add" style="display: block;">
-                            <label class="text-dark mb-1 fs-6 fw-semibold">Start Time<span  class="text-danger">*</span></label>
-                            <input class="form-control form-control-solid onduty_attd_type_today_st_time_add" placeholder="Pick time" />
-                        </div>
-                        <div class="col-lg-3 mb-3" id="onduty_attd_type_today_ed_time_add" style="display: block;">
-                            <label class="text-dark fs-6 mb-1 fw-semibold">End Time<span  class="text-danger">*</span></label>
-                            <input class="form-control form-control-solid onduty_attd_type_today_ed_time_add"placeholder="Pick time" />
                         </div>
                         <div class="col-lg-4 mb-3" id="onduty_attd_type_tomor_add" style="display: none;">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Tomorrow Date</label>
@@ -1109,38 +1134,75 @@
                                 <input type="text" class="form-control" value="<?php echo $onduty_futureDate; ?>" disabled />
                             </div>
                         </div>
-                        <div class="col-lg-3 mb-3" id="onduty_attd_type_tomor_st_time_add" style="display: none;">
-                            <label class="text-dark mb-1 fs-6 fw-semibold">Start Time<span  class="text-danger">*</span></label>
-                            <input class="form-control form-control-solid onduty_attd_type_tomor_st_time_add"   placeholder="Pick time" />
-                        </div>
-                        <div class="col-lg-3 mb-3" id="onduty_attd_type_tomor_ed_time_add" style="display: none;">
-                            <label class="text-dark fs-6 mb-1 fw-semibold">End Time<span   class="text-danger">*</span></label>
-                            <input class="form-control form-control-solid onduty_attd_type_tomor_ed_time_add"  placeholder="Pick time" />
-                        </div>
                         <div class="col-lg-4 mb-3" id="onduty_attd_type_custom_add" style="display: none;">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Custom Date<span   class="text-danger">*</span></label>
                             <div class="input-group input-group-merge">
                                 <span class="input-group-text"><i  class="mdi mdi-calendar-month-outline fs-4"></i></span>
-                                <input type="text" class="form-control common_date_class" value="<?php echo date('d-M-Y'); ?>" />
+                                <input type="text" class="form-control common_datepicker" id="custom_date_add_on" name="attendance_date_range_add" readonly value="<?php echo date('d-M-Y'); ?>" />
                             </div>
                         </div>
-                        <div class="col-lg-3 mb-3" id="onduty_attd_type_custom_st_time_add" style="display: none;">
+                        <div class="col-lg-4 mb-3" id="onduty_attd_type_custom_st_time_add" >
                             <label class="text-dark mb-1 fs-6 fw-semibold">Start Time<span   class="text-danger">*</span></label>
-                            <input class="form-control form-control-solid onduty_attd_type_custom_st_time_add"  placeholder="Pick time" />
+                            <input class="form-control form-control-solid onduty_attd_type_custom_st_time_add common_time_class" id="onduty_st_time_add" name="st_time"  placeholder="Pick time" />
+                            <div id="onduty_st_time_add_err" class="text-danger"></div>
                         </div>
-                        <div class="col-lg-3 mb-3" id="onduty_attd_type_custom_ed_time_add" style="display: none;">
+                        <div class="col-lg-4 mb-3" id="onduty_attd_type_custom_ed_time_add" >
                             <label class="text-dark fs-6 mb-1 fw-semibold">End Time<span    class="text-danger">*</span></label>
-                            <input class="form-control form-control-solid onduty_attd_type_custom_ed_time_add"  placeholder="Pick time" />
+                            <input class="form-control form-control-solid onduty_attd_type_custom_ed_time_add common_timepicker" id="onduty_ed_time_add" name="end_time"  placeholder="Pick time" />
+                            <div id="onduty_ed_time_add_err" class="text-danger"></div>
+                            
                         </div>
+                        <div class="col-lg-4 mb-3">
+                            <label class="text-dark mb-1 fs-6 fw-semibold">Company<span class="text-danger">*</span></label>
+                            <select id="company_id_od" name="company_id" class="select3 form-select" >
+                                <option value="">Select Company</option>
+                                <option value="egc">Elysium Groups of Companies</option>
+                                @if(isset($company_list))
+                                @foreach($company_list as $clist)
+                                    <option value="{{$clist->sno}}" >{{$clist->company_name}}</option>
+                                @endforeach
+                                @endif
+                            </select>
+                            <div id="company_id_od_err" class="text-danger"></div>
+                        </div>
+                        <div class="col-lg-4 mb-3" id="business_od">
+                            <label class="text-dark mb-1 fs-6 fw-semibold">Entity<span  class="text-danger">*</span></label>
+                            <select class="select3 form-select" id="entity_id_od" name="entity_id" >
+                                <option value="">Select Entity</option>
+
+                            </select>
+                            <div id="entity_id_od_err" class="text-danger"></div>
+                        </div>
+                        <input type="hidden" class="form-control" name="entry_select" value="3"  />
+                        <div class="col-lg-4 mb-3">
+                            <label class="text-dark mb-1 fs-6 fw-semibold">Department<span  class="text-danger">*</span></label>
+                            <select class="select3 form-select" id="department_add_od" name="department_id">
+                                <option value="">Select Department</option>
+                            </select>
+                            <div id="department_add_od_err" class="text-danger"></div>
+                        </div>
+                        <div class="col-lg-4 mb-3">
+                            <label class="text-dark mb-1 fs-6 fw-semibold">Staff<span  class="text-danger">*</span></label>
+                            <select class="select3 form-select" id="staff_add_od" name="staff_id[]" placeholder="Select Staff">
+                            </select>
+                             <div id="staff_add_od_err" class="text-danger"></div>
+                        </div>
+
+                        
+                    </div>
+                    <div class="row">
+                        
                         <div class="col-lg-12 mb-3">
                             <label class="text-dark mb-1 fs-6 fw-semibold">Reason<span   class="text-danger">*</span></label>
-                            <textarea class="form-control" rows="3" placeholder="Enter Reason"></textarea>
+                            <textarea class="form-control" rows="3" id="od_reason" name="reason" placeholder="Enter Reason"></textarea>
+                             <div id="od_reason_err" class="text-danger"></div>
                         </div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mt-4">
                         <button type="reset" class="btn btn-outline-danger text-primary me-3" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" id="create_sms_btn" class="btn btn-primary" data-bs-dismiss="modal">Mark OnDuty Attendance</button>
+                        <button type="button" id="odDutyBtn" class="btn btn-primary" onclick="mark_onDuty_att_func()">Mark OnDuty Attendance</button>
                     </div>
+                    </form>
                 </div>
                 <!--end::Modal body-->
             </div>
@@ -1376,9 +1438,9 @@
                         <div class="avatar-stack">
                             <img src="{{ asset('assets/egc_images/auth/user_3.png') }}" alt="user-avatar"
                                 class="avatar-img" />
-                            <img src="{{ asset('assets/newImgs/user_8.jfif') }}" alt="user-avatar"
+                            <img src="#" alt="user-avatar"
                                 class="avatar-img" />
-                            <img src="{{ asset('assets/newImgs/user_4.png') }}" alt="user-avatar"
+                            <img src="#" alt="user-avatar"
                                 class="avatar-img" />
                         </div>
                         <div class="row mb-2">
@@ -2874,10 +2936,150 @@
         <!--end::Modal dialog-->
     </div>
     <!--end::Modal -  Mark Present Attendance -->
+<script>
+  const dropArea = document.getElementById("dropArea");
+  const fileInput = document.getElementById("fileInput");
+  const fileList = document.getElementById("fileList");
 
+  // Highlight drop area when dragging files
+  dropArea.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropArea.classList.add("bg-light");
+  });
+
+  dropArea.addEventListener("dragleave", () => {
+      dropArea.classList.remove("bg-light");
+  });
+
+  // Handle file drop
+  dropArea.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropArea.classList.remove("bg-light");
+
+      if (e.dataTransfer.files.length > 0) {
+          fileInput.files = e.dataTransfer.files;
+          displayFileNames(Array.from(e.dataTransfer.files));
+      }
+  });
+
+  // Display selected file names
+  fileInput.addEventListener("change", (e) => {
+      if (e.target.files.length > 0) {
+          displayFileNames(Array.from(e.target.files));
+      }
+  });
+
+  function displayFileNames(files) {
+      fileList.innerHTML = files
+          .map((file, index) => `<span>${index + 1}. ${file.name} </span>`)
+          .join("");
+  }
+   document.getElementById('uploadMaterialForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            
+            const errMssg = document.getElementById('err_mssg');
+            errMssg.innerHTML = "";
+            
+            const fileInput = document.getElementById('fileInput');
+            const uploadCourseId = document.getElementById('upload_chap_course_id').value;
+                // ✅ For non-lab docs → file required
+                if (!fileInput.value || fileInput.files.length === 0) {
+                errMssg.textContent = "Please select at least one file to upload.";
+                return;
+                }
+            
+            
+            const formData = new FormData();
+                for (let i = 0; i < fileInput.files.length; i++) {
+                formData.append('file_upload', fileInput.files[i]);
+                }
+            
+            
+            const uploadButton = document.getElementById('uploadButton');
+            const uploadLoader = document.getElementById('uploadLoader');
+            
+            uploadButton.disabled = true;
+            uploadLoader.classList.remove('d-none');
+            
+            fetch('{{ route("upload_essl") }}', {
+                method: 'POST',
+                headers: {
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                },
+                body: formData
+            })
+                .then(async response => {
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    return response.json();
+                } else {
+                    const text = await response.text();
+                    throw new Error("Server returned non-JSON response:\n" + text);
+                }
+                })
+                .then(data => {
+                uploadLoader.classList.add('d-none');
+                uploadButton.disabled = false;
+                if (data.success) {
+                    toastr.success('Materials uploaded successfully!');
+                
+                    // Reset full form
+                    document.getElementById('uploadMaterialForm').reset();
+                
+                    // Reset select2/select3 dropdowns
+                    $('#document_type_id').val('').trigger('change');
+                    $('#course_chapter_id').val('').trigger('change');
+                    $('#languageSelect').val('javascript').trigger('change'); // default back
+                
+                    // Reset code editor
+                    $('#codeEditor').text('');
+                    $('#codeTitle').val('');
+                    $('#labCodeSection').addClass('d-none'); // hide Lab Code section
+                
+                    // Reset file input + file list
+                    $('#fileInput').val('');
+                    $('#fileList').empty();
+                    $('#err_mssg').text('');
+                
+                    // Hide modal
+                    $('#kt_modal_upload_chapter').modal('hide');
+                }
+                else {
+                    errMssg.textContent = data.message || "An error occurred while uploading files.";
+                }
+                })
+                .catch(error => {
+                uploadLoader.classList.add('d-none');
+                uploadButton.disabled = false;
+                console.error('Error:', error);
+                errMssg.textContent = "An error occurred while uploading files.";
+                });
+        });
+</script>
+<style>
+  #dropArea {
+      cursor: pointer;
+  }
+  #dropArea.bg-light {
+      background-color: #f8f9fa;
+  }
+  #fileList p {
+      margin: 0;
+      font-size: 0.8rem;
+  }
+</style>
+
+    <script>
+        let currentPage = 1;
+        let isLoading = false;
+        let abortController = new AbortController();
+    </script>
 
     <!--Add - Attendance Type - Leave Start -->
     <script>
+
+       
+
         function attendance_type_func_add() {
             var attendance_type_add = document.getElementById("attendance_type_add").value;
 
@@ -2905,35 +3107,17 @@
 
             if (perm_attendance_type_add == "today") {
                 document.getElementById("perm_attd_type_today_add").style.display = "block";
-                document.getElementById("perm_attd_type_today_st_time_add").style.display = "block";
-                document.getElementById("perm_attd_type_today_ed_time_add").style.display = "block";
                 document.getElementById("perm_attd_type_tomor_add").style.display = "none";
-                document.getElementById("perm_attd_type_tomor_st_time_add").style.display = "none";
-                document.getElementById("perm_attd_type_tomor_ed_time_add").style.display = "none";
                 document.getElementById("perm_attd_type_custom_add").style.display = "none";
-                document.getElementById("perm_attd_type_custom_st_time_add").style.display = "none";
-                document.getElementById("perm_attd_type_custom_ed_time_add").style.display = "none";
 
             } else if (perm_attendance_type_add == "tomorrow") {
                 document.getElementById("perm_attd_type_today_add").style.display = "none";
-                document.getElementById("perm_attd_type_today_st_time_add").style.display = "none";
-                document.getElementById("perm_attd_type_today_ed_time_add").style.display = "none";
                 document.getElementById("perm_attd_type_tomor_add").style.display = "block";
-                document.getElementById("perm_attd_type_tomor_st_time_add").style.display = "block";
-                document.getElementById("perm_attd_type_tomor_ed_time_add").style.display = "block";
                 document.getElementById("perm_attd_type_custom_add").style.display = "none";
-                document.getElementById("perm_attd_type_custom_st_time_add").style.display = "none";
-                document.getElementById("perm_attd_type_custom_ed_time_add").style.display = "none";
             } else {
                 document.getElementById("perm_attd_type_today_add").style.display = "none";
-                document.getElementById("perm_attd_type_today_st_time_add").style.display = "none";
-                document.getElementById("perm_attd_type_today_ed_time_add").style.display = "none";
                 document.getElementById("perm_attd_type_tomor_add").style.display = "none";
-                document.getElementById("perm_attd_type_tomor_st_time_add").style.display = "none";
-                document.getElementById("perm_attd_type_tomor_ed_time_add").style.display = "none";
                 document.getElementById("perm_attd_type_custom_add").style.display = "block";
-                document.getElementById("perm_attd_type_custom_st_time_add").style.display = "block";
-                document.getElementById("perm_attd_type_custom_ed_time_add").style.display = "block";
             }
         }
     </script>
@@ -2946,35 +3130,17 @@
 
             if (onduty_attendance_type_add == "today") {
                 document.getElementById("onduty_attd_type_today_add").style.display = "block";
-                document.getElementById("onduty_attd_type_today_st_time_add").style.display = "block";
-                document.getElementById("onduty_attd_type_today_ed_time_add").style.display = "block";
                 document.getElementById("onduty_attd_type_tomor_add").style.display = "none";
-                document.getElementById("onduty_attd_type_tomor_st_time_add").style.display = "none";
-                document.getElementById("onduty_attd_type_tomor_ed_time_add").style.display = "none";
                 document.getElementById("onduty_attd_type_custom_add").style.display = "none";
-                document.getElementById("onduty_attd_type_custom_st_time_add").style.display = "none";
-                document.getElementById("onduty_attd_type_custom_ed_time_add").style.display = "none";
 
             } else if (onduty_attendance_type_add == "tomorrow") {
                 document.getElementById("onduty_attd_type_today_add").style.display = "none";
-                document.getElementById("onduty_attd_type_today_st_time_add").style.display = "none";
-                document.getElementById("onduty_attd_type_today_ed_time_add").style.display = "none";
                 document.getElementById("onduty_attd_type_tomor_add").style.display = "block";
-                document.getElementById("onduty_attd_type_tomor_st_time_add").style.display = "block";
-                document.getElementById("onduty_attd_type_tomor_ed_time_add").style.display = "block";
                 document.getElementById("onduty_attd_type_custom_add").style.display = "none";
-                document.getElementById("onduty_attd_type_custom_st_time_add").style.display = "none";
-                document.getElementById("onduty_attd_type_custom_ed_time_add").style.display = "none";
             } else {
                 document.getElementById("onduty_attd_type_today_add").style.display = "none";
-                document.getElementById("onduty_attd_type_today_st_time_add").style.display = "none";
-                document.getElementById("onduty_attd_type_today_ed_time_add").style.display = "none";
                 document.getElementById("onduty_attd_type_tomor_add").style.display = "none";
-                document.getElementById("onduty_attd_type_tomor_st_time_add").style.display = "none";
-                document.getElementById("onduty_attd_type_tomor_ed_time_add").style.display = "none";
                 document.getElementById("onduty_attd_type_custom_add").style.display = "block";
-                document.getElementById("onduty_attd_type_custom_st_time_add").style.display = "block";
-                document.getElementById("onduty_attd_type_custom_ed_time_add").style.display = "block";
             }
         }
     </script>
@@ -3077,7 +3243,33 @@
         });
         $('.indiv_date_scroll_table').wrap('<div class="indiv_date_scroll_table" />');
     </script>
+ <!-- Toastr CSS from CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 
+    <!-- Toastr JavaScript from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <style>
+        /* Customize Toastr notification */
+        .toast-success {
+            background-color: green;
+        }
+
+        /* Customize Toastr notification */
+        .toast-error {
+            background-color: red;
+        }
+    </style>
+
+<script>
+
+
+        // Display Toastr messages
+            @if (Session::has('toastr'))
+                var type = "{{ Session::get('toastr')['type'] }}";
+                var message = "{{ Session::get('toastr')['message'] }}";
+                toastr[type](message);
+            @endif
+    </script>
     {{-- Calender View Script --}}
     <script>
       document.addEventListener("DOMContentLoaded", function () {
@@ -3222,114 +3414,7 @@
       });
     </script>
 
-    {{-- List Script --}}
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-        ];
-
-        const container = document.querySelector(".attendance-container"); // assuming single container
-        let currentDate = new Date();
-
-        const currentMonthLabel = document.getElementById("currentMonth");
-
-        function renderMonth(date) {
-            const monthIndex = date.getMonth();
-            const year = date.getFullYear();
-
-            // update label
-            currentMonthLabel.textContent = `${monthNames[monthIndex]} ${year}`;
-
-            // generate attendance table
-            generateDays(container, year, monthIndex);
-        }
-
-        document.getElementById("prevMonth").addEventListener("click", function (e) {
-            e.preventDefault();
-            currentDate.setMonth(currentDate.getMonth() - 1);
-            renderMonth(currentDate);
-        });
-
-        document.getElementById("nextMonth").addEventListener("click", function (e) {
-            e.preventDefault();
-            currentDate.setMonth(currentDate.getMonth() + 1);
-            renderMonth(currentDate);
-        });
-
-        // Initial render
-        renderMonth(currentDate);
-
-        function generateDays(container, year, monthIndex) {
-            const headerRow = container.querySelector(".attendance-header");
-            const bodyRows = container.querySelectorAll(".attendance-body tr");
-
-            if (!headerRow) return;
-
-            // clear previous columns except first (Staffs) and last (Actions)
-            while (headerRow.children.length > 2) {
-                headerRow.removeChild(headerRow.children[1]);
-            }
-
-            const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-
-            for (let d = 1; d <= daysInMonth; d++) {
-                const date = new Date(year, monthIndex, d);
-                const dayName = date.toLocaleString("en-US", { weekday: "short" });
-
-                const th = document.createElement("th");
-                th.className = "min-w-100px text-center align-middle";
-
-                th.innerHTML = `
-                <a href="javascript:;"
-                    class="text-white d-flex flex-column align-items-center justify-content-center"
-                    data-bs-toggle="modal"
-                    data-bs-target="#kt_modal_view_individual_day_attendance">
-                    <div style="font-weight:600; font-size:14px;">${monthNames[monthIndex]} ${d}</div>
-                    <div style="font-size:12px; color:#ccc;">${dayName}</div>
-                </a>
-                `;
-                headerRow.insertBefore(th, headerRow.lastElementChild);
-            }
-
-            // populate body rows
-            bodyRows.forEach(row => {
-                while (row.children.length > 2) {
-                    row.removeChild(row.children[1]);
-                }
-
-                for (let d = 1; d <= daysInMonth; d++) {
-                    const date = new Date(year, monthIndex, d);
-                    const dayName = date.toLocaleString("en-US", { weekday: "short" });
-                    const td = document.createElement("td");
-
-                    let content;
-                    if (dayName === "Sun") {
-                        content = `<span class="badge bg-label-secondary border border-secondary text-black fw-bold px-3 py-1">WKD</span>`;
-                    } else {
-                        const badges = [
-                            `<label class="badge bg-label-success text-black border border-success fw-bold px-3 py-1"><span>P</span></label>`,
-                            `<label class="badge bg-label-warning text-black border border-warning fw-bold px-3 py-1"><span>L</span></label>`,
-                            `<label class="badge bg-label-danger text-black border border-danger fw-bold px-3 py-1"><span>A</span></label>`,
-                            `<label><span class="badge bg-primary border border-primary text-white fw-bold px-3 py-1">H</span></label>`,
-                            `<div class="d-flex flex-column gap-1">
-                                <label><span class="badge text-black fw-bold px-3 py-1" style="background-color:#DCE2FC; border:1px solid #2856FA;">30 M</span></label>
-                                <label><span class="badge text-black fw-bold px-3 py-1" style="background-color:#EDD4FF; border:1px solid #9C2DEB;">1.5 H</span></label>
-                            </div>`
-                        ];
-                        content = badges[Math.floor(Math.random() * badges.length)];
-                    }
-
-                    td.innerHTML = content;
-                    row.insertBefore(td, row.lastElementChild);
-                }
-            });
-        }
-    });
-</script>
-
-
-<script>
+    <script>
   $(document).ready(function() {
     const $select = $('#staffpresent');
     const $count = $('#staff-count');
@@ -3379,34 +3464,34 @@
 
 
 <script>
-function updateAttendanceUI(entryValue) {
-  const reason = document.querySelector('.reason_edit');
-  const startTime = document.querySelector('.type_st_dt_edit');
-  const endTime = document.querySelector('.type_end_dt_edit');
+    function updateAttendanceUI(entryValue) {
+    const reason = document.querySelector('.reason_edit');
+    const startTime = document.querySelector('.type_st_dt_edit');
+    const endTime = document.querySelector('.type_end_dt_edit');
 
-  // Hide all by default
-  reason.style.display = 'none';
-  startTime.style.display = 'none';
-  endTime.style.display = 'none';
+    // Hide all by default
+    reason.style.display = 'none';
+    startTime.style.display = 'none';
+    endTime.style.display = 'none';
 
-  if(entryValue === 'present') {
-    // Nothing visible
-  }
-  else if(['absent','leave','workoff'].includes(entryValue)) {
-    reason.style.display = 'block';
-  }
-  else if(['on_duty','permission'].includes(entryValue)) {
-    reason.style.display = 'block';
-    startTime.style.display = 'block';
-    endTime.style.display = 'block';
-  }
-}
+    if(entryValue === 'present') {
+        // Nothing visible
+    }
+    else if(['absent','leave','workoff'].includes(entryValue)) {
+        reason.style.display = 'block';
+    }
+    else if(['on_duty','permission'].includes(entryValue)) {
+        reason.style.display = 'block';
+        startTime.style.display = 'block';
+        endTime.style.display = 'block';
+    }
+    }
 
-// Initialize UI on page load
-document.addEventListener('DOMContentLoaded', () => {
-  const entrySelect = document.getElementById('entry_select_edit');
-  updateAttendanceUI(entrySelect.value);
-});
+    // Initialize UI on page load
+    document.addEventListener('DOMContentLoaded', () => {
+    const entrySelect = document.getElementById('entry_select_edit');
+    updateAttendanceUI(entrySelect.value);
+    });
 </script>
 
 <script>
@@ -3479,194 +3564,386 @@ document.addEventListener('DOMContentLoaded', () => {
             });
      });
 </script>
-<script>
-let currentPage = 1;
-let isLoading = false;
-let abortController = new AbortController();
 
-// LOAD LIST
-function loadAttendance(page = 1) {
-    const perpage = document.getElementById('perpage').value;
-    const search = document.getElementById('search_filter').value;
-    const company_fill = document.getElementById('company_fill').value;
-    const entity_fill = document.getElementById('entity_fill').value;
+    {{-- List Script --}}
+<!-- <script>
+    // document.addEventListener("DOMContentLoaded", function () {
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        ];
 
-    const url = `/hr_enroll/manage_attendance?page=${page}&sorting_filter=${perpage}&search_filter=${search}&company_fill=${company_fill}&entity_fill=${entity_fill}`;
+        const container = document.querySelector(".attendance-container"); // assuming single container
+        let currentDate = new Date();
 
-    isLoading = true;
+        const currentMonthLabel = document.getElementById("currentMonth");
 
-    document.querySelector(".attendance-body").innerHTML = skeletenAttendanceRow();
+        function renderMonth(date) {
+            const monthIndex = date.getMonth();
+            const year = date.getFullYear();
 
-    if (abortController.signal) abortController.abort();
-    abortController = new AbortController();
+            // update label
+            currentMonthLabel.textContent = `${monthNames[monthIndex]} ${year}`;
 
-    fetch(url, { 
-        headers: { "X-Requested-With": "XMLHttpRequest" }, 
-        signal: abortController.signal 
-    })
-    .then(res => res.json())
-    .then(res => {
+            // generate attendance table
+            generateDays(container, year, monthIndex);
+        }
 
-        renderAttendanceRows(res.data);        // only rows (center dates are created separately)
+        document.getElementById("prevMonth").addEventListener("click", function (e) {
+            e.preventDefault();
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderMonth(currentDate);
+            loadAttendance(currentPage);
+        });
 
-         updatePagination(res.current_page, res.last_page, res.total, perpage);
+        document.getElementById("nextMonth").addEventListener("click", function (e) {
+            e.preventDefault();
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderMonth(currentDate);
+            loadAttendance(currentPage);
+        });
 
-        // re-generate date columns after table loads
+        // Initial render
         renderMonth(currentDate);
 
-        isLoading = false;
-    })
-    .catch(err => {
-        if (err.name !== "AbortError") console.error(err);
-        isLoading = false;
+        function generateDays(container, year, monthIndex) {
+            const headerRow = container.querySelector(".attendance-header");
+            const bodyRows = container.querySelectorAll(".attendance-body tr");
+
+            if (!headerRow) return;
+
+            // clear previous columns except first (Staffs) and last (Actions)
+            while (headerRow.children.length > 2) {
+                headerRow.removeChild(headerRow.children[1]);
+            }
+
+            const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const date = new Date(year, monthIndex, d);
+                const dayName = date.toLocaleString("en-US", { weekday: "short" });
+
+                const th = document.createElement("th");
+                th.className = "min-w-100px text-center align-middle";
+
+                th.innerHTML = `
+                <a href="javascript:;"
+                    class="text-white d-flex flex-column align-items-center justify-content-center"
+                    data-bs-toggle="modal"
+                    data-bs-target="#kt_modal_view_individual_day_attendance">
+                    <div style="font-weight:600; font-size:14px;">${monthNames[monthIndex]} ${d}</div>
+                    <div style="font-size:12px; color:#ccc;">${dayName}</div>
+                </a>
+                `;
+                headerRow.insertBefore(th, headerRow.lastElementChild);
+            }
+
+            // populate body rows
+            bodyRows.forEach(row => {
+                while (row.children.length > 2) {
+                    row.removeChild(row.children[1]);
+                }
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const date = new Date(year, monthIndex, d);
+                    const dayName = date.toLocaleString("en-US", { weekday: "short" });
+                    const td = document.createElement("td");
+
+                    let content;
+                    // content ='<div class="skeleton"></div>'
+                    if (dayName === "Sun") {
+                        content = `<span class="badge bg-label-secondary border border-secondary text-black fw-bold px-3 py-1">WKD</span>`;
+                    } else {
+                        const badges = [
+                            `<label class="badge bg-label-success text-black border border-success fw-bold px-3 py-1"><span>P</span></label>`,
+                            `<label class="badge bg-label-warning text-black border border-warning fw-bold px-3 py-1"><span>L</span></label>`,
+                            `<label class="badge bg-label-danger text-black border border-danger fw-bold px-3 py-1"><span>A</span></label>`,
+                            `<label><span class="badge bg-primary border border-primary text-white fw-bold px-3 py-1">H</span></label>`,
+                            `<div class="d-flex flex-column gap-1">
+                                <label><span class="badge text-black fw-bold px-3 py-1" style="background-color:#DCE2FC; border:1px solid #2856FA;">30 M</span></label>
+                                <label><span class="badge text-black fw-bold px-3 py-1" style="background-color:#EDD4FF; border:1px solid #9C2DEB;">1.5 H</span></label>
+                            </div>`
+                        ];
+                        content = badges[Math.floor(Math.random() * badges.length)];
+                    }
+
+                    td.innerHTML = content;
+                    row.insertBefore(td, row.lastElementChild);
+                }
+            });
+        }
+    // });
+</script> -->
+
+    {{-- List Script --}}
+<script>
+     let currentDate = new Date();
+    document.addEventListener("DOMContentLoaded", function () {
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        ];
+
+        const container = document.querySelector(".attendance-container"); // assuming single container
+       
+
+        const currentMonthLabel = document.getElementById("currentMonth");
+
+        function renderMonth(date) {
+            const monthIndex = date.getMonth();
+            const year = date.getFullYear();
+
+            // update label
+            currentMonthLabel.textContent = `${monthNames[monthIndex]} ${year}`;
+
+            // generate attendance table
+            generateDays(container, year, monthIndex);
+        }
+
+        document.getElementById("prevMonth").addEventListener("click", function (e) {
+            e.preventDefault();
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderMonth(currentDate);
+            loadAttendance(currentPage);
+        });
+
+        document.getElementById("nextMonth").addEventListener("click", function (e) {
+            e.preventDefault();
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderMonth(currentDate);
+            loadAttendance(currentPage);
+        });
+
+        // Initial render
+        renderMonth(currentDate);
+
+        function generateDays(container, year, monthIndex) {
+            const headerRow = container.querySelector(".attendance-header");
+            const bodyRows = container.querySelectorAll(".attendance-body tr");
+
+            if (!headerRow) return;
+
+            // clear previous columns except first (Staffs) and last (Actions)
+            while (headerRow.children.length > 2) {
+                headerRow.removeChild(headerRow.children[1]);
+            }
+
+            const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const date = new Date(year, monthIndex, d);
+                const dayName = date.toLocaleString("en-US", { weekday: "short" });
+
+                const th = document.createElement("th");
+                th.className = "min-w-100px text-center align-middle";
+
+                th.innerHTML = `
+                <a href="javascript:;"
+                    class="text-white d-flex flex-column align-items-center justify-content-center"
+                    data-bs-toggle="modal"
+                    data-bs-target="#kt_modal_view_individual_day_attendance">
+                    <div style="font-weight:600; font-size:14px;">${monthNames[monthIndex]} ${d}</div>
+                    <div style="font-size:12px; color:#ccc;">${dayName}</div>
+                </a>
+                `;
+                headerRow.insertBefore(th, headerRow.lastElementChild);
+            }
+
+            // populate body rows
+            bodyRows.forEach(row => {
+                while (row.children.length > 2) {
+                    row.removeChild(row.children[1]);
+                }
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const date = new Date(year, monthIndex, d);
+                    const dayName = date.toLocaleString("en-US", { weekday: "short" });
+                    const td = document.createElement("td");
+
+                    td.classList.add('skeleton-cell');
+                    td.innerHTML = `<div class="skeleton"></div>`;
+                    row.insertBefore(td, row.lastElementChild);
+                }
+            });
+        }
     });
-}
+</script>
 
+<script>
+    // LOAD LIST
+    function loadAttendance(page = 1) {
+        const perpage = document.getElementById('perpage').value;
+        const search = document.getElementById('search_filter').value;
+        const company_fill = document.getElementById('company_fill').value;
+        const entity_fill = document.getElementById('entity_fill').value;
+        const month = currentDate.getMonth() + 1;
+        const year = currentDate.getFullYear();
+        const formattedMonth = new Date(year, month - 1).toLocaleString('en-us', { month: 'short' }).toUpperCase();
+        const monthFilter = `${formattedMonth}-${year}`;
+        const url = `/hr_enroll/manage_attendance?page=${page}&sorting_filter=${perpage}&search_filter=${search}&company_fill=${company_fill}&entity_fill=${entity_fill}&month_filter=${monthFilter}`;
 
+        isLoading = true;
 
-// SKELETON
-function skeletenAttendanceRow() {
-    return `
-        <tr class="skeleton-loader">
-            <td><div class="skeleton"></div></td>
-            <td><div class="skeleton"></div></td>
-        </tr>
-    `;
-}
+        document.querySelector(".attendance-body").innerHTML = skeletenAttendanceRow();
 
+        if (abortController.signal) abortController.abort();
+        abortController = new AbortController();
 
+        fetch(url, { 
+            headers: { "X-Requested-With": "XMLHttpRequest" }, 
+            signal: abortController.signal 
+        })
+        .then(res => res.json())
+        .then(res => {
 
-// RENDER BODY ROWS
-function renderAttendanceRows(data) {
+            renderAttendanceRows(res.data);        // only rows (center dates are created separately)
 
-    let tbody = document.querySelector(".attendance-body");
-    tbody.innerHTML = "";
+            updatePagination(res.current_page, res.last_page, res.total, perpage);
 
-    if (!data.length) {
-        tbody.innerHTML = `<tr><td colspan="50" class="text-center">No Records Found</td></tr>`;
-        return;
+            // re-generate date columns after table loads
+            renderMonth(currentDate);
+
+            isLoading = false;
+        })
+        .catch(err => {
+            if (err.name !== "AbortError") console.error(err);
+            isLoading = false;
+        });
     }
 
-    data.forEach(row => {
-        let staff_image = '';
-        if (row.staff_image && row.staff_image.trim() !== '') {
-            if (row.company_type == 1) {
-                staff_image = `staff_images/Management/${row.staff_image}`;
-            } else {
-                staff_image = `staff_images/Buisness/${row.company_id}/${row.entity_id}/${row.staff_image}`;
-            }
-        } else {
-            staff_image = row.gender == 1
-                ? 'assets/egc_images/auth/user_2.png'
-                : 'assets/egc_images/auth/user_7.png';
+    // SKELETON
+    function skeletenAttendanceRow() {
+        return `
+            <tr class="skeleton-loader">
+                <td><div class="skeleton"></div></td>
+                <td><div class="skeleton"></div></td>
+            </tr>
+        `;
+    }
+
+    // RENDER BODY ROWS
+    function renderAttendanceRows(data) {
+
+        let tbody = document.querySelector(".attendance-body");
+        tbody.innerHTML = "";
+
+        if (!data.length) {
+            tbody.innerHTML = `<tr><td colspan="50" class="text-center">No Records Found</td></tr>`;
+            return;
         }
-        staff_image = `{{ asset('${staff_image}') }}`;
-        tbody.insertAdjacentHTML("beforeend", `
-            <tr data-staff-id="${row.staff_id}">
-                
-                <!-- STAFF COLUMN -->
-                <td>
-                    <div class="d-flex align-items-center justify-content-start">
-                        <div class="avatar-xl mt-3">
-                            <img src="${staff_image}" 
-                                 class="w-px-50 h-auto rounded-circle" />
-                        </div>
 
-                        <div class="d-flex flex-column justify-content-between align-items-start gap-1 ms-2">
-                            <a href="javascript:;" data-bs-toggle="modal"
-                               data-bs-target="#kt_modal_view_individual_staff_attendance">
-                                <span class="fs-7 text-black">${row.staff_name}</span>
-                            </a>
+        data.forEach(row => {
+            let staff_image = '';
+            if (row.staff_image && row.staff_image.trim() !== '') {
+                if (row.company_type == 1) {
+                    staff_image = `staff_images/Management/${row.staff_image}`;
+                } else {
+                    staff_image = `staff_images/Buisness/${row.company_id}/${row.entity_id}/${row.staff_image}`;
+                }
+            } else {
+                staff_image = row.gender == 1
+                    ? 'assets/egc_images/auth/user_2.png'
+                    : 'assets/egc_images/auth/user_7.png';
+            }
+            staff_image = `{{ asset('${staff_image}') }}`;
+            tbody.insertAdjacentHTML("beforeend", `
+                <tr data-staff-id="${row.staff_id}">
+                    
+                    <!-- STAFF COLUMN -->
+                    <td>
+                        <div class="d-flex align-items-center justify-content-start">
+                            <div class="avatar-xl mt-3">
+                                <img src="${staff_image}" 
+                                    class="w-px-50 h-px-50 rounded-circle" />
+                            </div>
 
-                            <span class="badge bg-warning text-white fs-8" 
-                                  data-bs-toggle="tooltip" title="Department Name">
-                                    ${row.department_name}
-                            </span>
+                            <div class="d-flex flex-column justify-content-between align-items-start gap-1 ms-2">
+                                <a href="javascript:;" data-bs-toggle="modal"
+                                data-bs-target="#kt_modal_view_individual_staff_attendance">
+                                    <span class="fs-7 text-black">${row.staff_name}</span>
+                                </a>
 
-                            <div>
-                                <span class="badge bg-dark text-white fs-8"
-                                      data-bs-toggle="tooltip" title="Overall Percentage">
-                                      ${row.overall_percentage ?? '0'}%
+                                <span class="badge bg-warning text-white fs-8" 
+                                    data-bs-toggle="tooltip" title="Department Name">
+                                        ${row.department_name}
                                 </span>
+
+                                <div>
+                                    <span class="badge bg-dark text-white fs-8"
+                                        data-bs-toggle="tooltip" title="Overall Percentage">
+                                        ${row.overall_percentage ?? '0'}%
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </td>
+                    </td>
 
-                <!-- AUTO DATE TDs WILL BE INSERTED HERE -->
-                
-                <!-- ACTIONS -->
-                <td class="text-center">
-                    <span class="d-flex gap-1 justify-content-center">
-                        <a href="javascript:;" data-bs-toggle="modal" 
-                           data-bs-target="#kt_modal_view_attendance">
-                            <i class="mdi mdi-eye fs-3 text-black"></i>
-                        </a>
+                    <!-- AUTO DATE TDs WILL BE INSERTED HERE -->
+                    
+                    <!-- ACTIONS -->
+                    <td class="text-center">
+                        <span class="d-flex gap-1 justify-content-center">
+                            <a href="javascript:;" data-bs-toggle="modal" 
+                            data-bs-target="#kt_modal_view_attendance">
+                                <i class="mdi mdi-eye fs-3 text-black"></i>
+                            </a>
 
-                        <a href="javascript:;" data-bs-toggle="modal" 
-                           data-bs-target="#kt_modal_edit">
-                            <i class="mdi mdi-square-edit-outline fs-3 text-black"></i>
-                        </a>
-                    </span>
-                </td>
-            </tr>
-        `);
-    });
-
-    // After rows created → fill attendance
-    fillAttendanceCells(data);
-}
-
-
-
-// INSERT ATTENDANCE INTO CENTER DATE COLUMNS
-function fillAttendanceCells(data) {
-
-    const bodyRows = document.querySelectorAll(".attendance-body tr");
-
-    bodyRows.forEach(row => {
-
-        const staffId = row.getAttribute("data-staff-id");
-
-        let staff = data.find(s => s.staff_id == staffId);
-        if (!staff) return;
-
-        // existing TDs (Staff + Actions)
-        const firstTD = row.children[0];
-        const lastTD = row.children[row.children.length - 1];
-
-        // remove old date cells
-        while (row.children.length > 2) {
-            row.removeChild(row.children[1]);
-        }
-
-        // use attendance object to fill days
-        Object.keys(staff.attendance).forEach(date => {
-            const status = staff.attendance[date];
-            const td = document.createElement("td");
-            td.innerHTML = getBadge(status);
-            row.insertBefore(td, lastTD);
+                            <a href="javascript:;" data-bs-toggle="modal" 
+                            data-bs-target="#kt_modal_edit">
+                                <i class="mdi mdi-square-edit-outline fs-3 text-black"></i>
+                            </a>
+                        </span>
+                    </td>
+                </tr>
+            `);
         });
-    });
-}
 
-
-
-// BADGE STYLE
-function getBadge(a) {
-    switch (a) {
-        case 'P': return `<span class="badge bg-label-success border border-success text-black fw-bold px-3 py-1">P</span>`;
-        case 'A': return `<span class="badge bg-label-danger border border-danger text-black fw-bold px-3 py-1">A</span>`;
-        case 'L': return `<span class="badge bg-label-warning border border-warning text-black fw-bold px-3 py-1">L</span>`;
-        case 'OD': return `<span class="badge bg-primary border border-primary text-white fw-bold px-3 py-1">OD</span>`;
-        case 'PR': return `<span class="badge bg-info border border-info text-black fw-bold px-3 py-1">PR</span>`;
-        default: return `<span class="badge bg-secondary">-</span>`;
+        // After rows created → fill attendance
+        fillAttendanceCells(data);
     }
-}
 
+    // INSERT ATTENDANCE INTO CENTER DATE COLUMNS
+    function fillAttendanceCells(data) {
 
+        const bodyRows = document.querySelectorAll(".attendance-body tr");
 
+        bodyRows.forEach(row => {
 
+            const staffId = row.getAttribute("data-staff-id");
+
+            let staff = data.find(s => s.staff_id == staffId);
+            if (!staff) return;
+
+            // existing TDs (Staff + Actions)
+            const firstTD = row.children[0];
+            const lastTD = row.children[row.children.length - 1];
+
+            // remove old date cells
+            while (row.children.length > 2) {
+                row.removeChild(row.children[1]);
+            }
+
+            // use attendance object to fill days
+            Object.keys(staff.attendance).forEach(date => {
+                const status = staff.attendance[date];
+                const td = document.createElement("td");
+                td.innerHTML = getBadge(status);
+                row.insertBefore(td, lastTD);
+            });
+        });
+    }
+
+    // BADGE STYLE
+    function getBadge(a) {
+        switch (a) {
+            case 'P': return `<span class="badge bg-label-success border border-success text-black fw-bold px-3 py-1">P</span>`;
+            case 'A': return `<span class="badge bg-label-danger border border-danger text-black fw-bold px-3 py-1">A</span>`;
+            case 'L': return `<span class="badge bg-label-warning border border-warning text-black fw-bold px-3 py-1">L</span>`;
+            case 'OD': return `<span class="badge bg-primary border border-primary text-white fw-bold px-3 py-1">OD</span>`;
+            case 'PR': return `<span class="badge bg-info border border-info text-black fw-bold px-3 py-1">PR</span>`;
+            case 'WK': return `<span class="badge bg-label-secondary border border-secondary text-black fw-bold px-3 py-1">WKD</span>`;
+            case 'HD': return `<span class="badge bg-primary border border-primary text-white fw-bold px-3 py-1">H</span>`;
+            default: return `<span class="badge bg-secondary">-</span>`;
+        }
+    }
 
     function updatePagination(currentPage, lastPage, total, perpage) {
         let paginationContainer = document.getElementById('pagination-container');
@@ -3726,9 +4003,1105 @@ function getBadge(a) {
     }
 
 
-// INIT
-loadAttendance(1);
+    // INIT
+    loadAttendance(1);
 </script>
 
 
+<script>
+     $(document).ready(function() {
+
+        
+           
+           // Business dropdown
+            $("#company_id_present").on('change', function() {
+               
+                 var countryId = $(this).val();
+                var entityDropdown = $("#entity_id_present");
+
+                entityDropdown.empty().append('<option value="">Select Entity</option>');
+
+                if (countryId) {
+                    // Fetch and populate states based on selected country
+                    $.ajax({
+                        url: "{{ route('entity_list') }}",
+                        type: "GET",
+                        data: {
+                            company_id: countryId
+                        },
+                        success: function(response) {
+                            if (response.status === 200 && response.data) {
+                                response.data.forEach(function(state) {
+                                    entityDropdown.append($('<option></option>').attr(
+                                        'value', state.sno).text(state
+                                        .entity_name));
+                                });
+                                
+                            }
+                        },
+                        error: function(error) {
+                            console.error('Error fetching states:', error);
+                        }
+                    });
+                }
+
+             
+                var stateDropdown = $("#department_add");
+                if (countryId == 'egc') {
+                    $('#business_present').hide();
+                    stateDropdown.empty().append('<option value="">Select Department</option>');
+                    var entity_id = 0 ;
+                   
+                        // Fetch and populate states based on selected country
+                        $.ajax({
+                            url: "{{ route('department') }}",
+                            type: "GET",
+                            data: {
+                                entity_id: entity_id
+                            },
+                            success: function(response) {
+                                if (response.status === 200 && response.data) {
+                                    response.data.forEach(function(state) {
+                                        stateDropdown.append($('<option></option>').attr(
+                                            'value', state.sno)
+                                            .attr('data-erpdepartmentid', state.erp_department_id)
+                                            .text(state.department_name));
+                                    });
+                                    
+                                }
+                            },
+                            error: function(error) {
+                                console.error('Error fetching Department:', error);
+                            }
+                        });
+                    
+                }else{
+                    $('#business_present').show();
+                }
+            });
+
+            $("#entity_id_present").on('change', function() {
+                 var entity_id = $(this).val();
+                 var stateDropdown = $("#department_add");
+
+                stateDropdown.empty().append('<option value="">Select Department</option>');
+
+                if (entity_id) {
+                    // Fetch and populate states based on selected country
+                    $.ajax({
+                        url: "{{ route('department') }}",
+                        type: "GET",
+                        data: {
+                            entity_id: entity_id
+                        },
+                        success: function(response) {
+                            if (response.status === 200 && response.data) {
+                                response.data.forEach(function(state) {
+                                    stateDropdown.append($('<option></option>').attr(
+                                        'value', state.sno)
+                                        .attr('data-erpdepartmentid', state.erp_department_id)
+                                        .text(state.department_name));
+                                });
+                                
+                            }
+                        },
+                        error: function(error) {
+                            console.error('Error fetching Department:', error);
+                        }
+                    });
+                }
+            });
+
+            $("#department_add").on('change', function() {
+                 var departmentId = $(this).val();
+                    var date = $('#attend_date').val();
+
+                    if(departmentId){
+                         $.ajax({
+                        url: "{{ route('staff_att') }}",
+                        type: "GET",
+                        data: {
+                            department_id: departmentId,
+                            date: date,
+                        },
+                        success: function (response) {
+                            
+                            if (response.status === 200 && response.data) {
+                                var selectDropdown = $("#staff_add");
+                                selectDropdown.empty().append('<option value="all">All</option>');
+                                response.data.forEach(function (k) {
+                                    selectDropdown.append($('<option></option>').attr('value', k.sno).text(k.staff_name + ' - ' + k.nick_name));
+                                });
+
+                            } else {
+                            }
+                        },
+                        error: function (error) {
+                            console.error('Error fetching staff:', error);
+                           
+                        }
+                    });
+                    }
+                   
+            });
+            
+     });
+</script>
+
+<script>
+     $(document).ready(function() {
+        // Business dropdown
+            $("#company_id_absent").on('change', function() {
+               
+                 var countryId = $(this).val();
+                var entityDropdown = $("#entity_id_absent");
+
+                entityDropdown.empty().append('<option value="">Select Entity</option>');
+
+                if (countryId) {
+                    // Fetch and populate states based on selected country
+                    $.ajax({
+                        url: "{{ route('entity_list') }}",
+                        type: "GET",
+                        data: {
+                            company_id: countryId
+                        },
+                        success: function(response) {
+                            if (response.status === 200 && response.data) {
+                                response.data.forEach(function(state) {
+                                    entityDropdown.append($('<option></option>').attr(
+                                        'value', state.sno).text(state
+                                        .entity_name));
+                                });
+                                
+                            }
+                        },
+                        error: function(error) {
+                            console.error('Error fetching states:', error);
+                        }
+                    });
+                }
+
+             
+                var stateDropdown = $("#department_add_absent");
+                if (countryId == 'egc') {
+                    $('#business_absent').hide();
+                    stateDropdown.empty().append('<option value="">Select Department</option>');
+                    var entity_id = 0 ;
+                   
+                        // Fetch and populate states based on selected country
+                        $.ajax({
+                            url: "{{ route('department') }}",
+                            type: "GET",
+                            data: {
+                                entity_id: entity_id
+                            },
+                            success: function(response) {
+                                if (response.status === 200 && response.data) {
+                                    response.data.forEach(function(state) {
+                                        stateDropdown.append($('<option></option>').attr(
+                                            'value', state.sno)
+                                            .attr('data-erpdepartmentid', state.erp_department_id)
+                                            .text(state.department_name));
+                                    });
+                                    
+                                }
+                            },
+                            error: function(error) {
+                                console.error('Error fetching Department:', error);
+                            }
+                        });
+                    
+                }else{
+                    $('#business_absent').show();
+                }
+            });
+
+            $("#entity_id_absent").on('change', function() {
+                 var entity_id = $(this).val();
+                 var stateDropdown = $("#department_add_absent");
+
+                stateDropdown.empty().append('<option value="">Select Department</option>');
+
+                if (entity_id) {
+                    // Fetch and populate states based on selected country
+                    $.ajax({
+                        url: "{{ route('department') }}",
+                        type: "GET",
+                        data: {
+                            entity_id: entity_id
+                        },
+                        success: function(response) {
+                            if (response.status === 200 && response.data) {
+                                response.data.forEach(function(state) {
+                                    stateDropdown.append($('<option></option>').attr(
+                                        'value', state.sno)
+                                        .attr('data-erpdepartmentid', state.erp_department_id)
+                                        .text(state.department_name));
+                                });
+                                
+                            }
+                        },
+                        error: function(error) {
+                            console.error('Error fetching Department:', error);
+                        }
+                    });
+                }
+            });
+
+            $("#department_add_absent").on('change', function() {
+                 var departmentId = $(this).val();
+                    var date = $('#attend_date_absent').val();
+
+                    if(departmentId){
+                         $.ajax({
+                        url: "{{ route('staff_att') }}",
+                        type: "GET",
+                        data: {
+                            department_id: departmentId,
+                            date: date,
+                        },
+                        success: function (response) {
+                           
+                            if (response.status === 200 && response.data) {
+                                var selectDropdown = $("#staff_add_absent");
+                                selectDropdown.empty().append('<option value="all">All</option>');
+                                response.data.forEach(function (k) {
+                                    selectDropdown.append($('<option></option>').attr('value', k.sno).text(k.staff_name + ' - ' + k.nick_name));
+                                });
+
+                            } else {
+                            }
+                        },
+                        error: function (error) {
+                            console.error('Error fetching staff:', error);
+                           
+                        }
+                    });
+                    }
+                   
+            });
+     });
+</script>
+
+<script>
+     $(document).ready(function() {
+        // Business dropdown
+            $("#company_id_leave").on('change', function() {
+               
+                 var countryId = $(this).val();
+                var entityDropdown = $("#entity_id_leave");
+
+                entityDropdown.empty().append('<option value="">Select Entity</option>');
+
+                if (countryId) {
+                    // Fetch and populate states based on selected country
+                    $.ajax({
+                        url: "{{ route('entity_list') }}",
+                        type: "GET",
+                        data: {
+                            company_id: countryId
+                        },
+                        success: function(response) {
+                            if (response.status === 200 && response.data) {
+                                response.data.forEach(function(state) {
+                                    entityDropdown.append($('<option></option>').attr(
+                                        'value', state.sno).text(state
+                                        .entity_name));
+                                });
+                                
+                            }
+                        },
+                        error: function(error) {
+                            console.error('Error fetching states:', error);
+                        }
+                    });
+                }
+
+             
+                var stateDropdown = $("#department_add_leave");
+                if (countryId == 'egc') {
+                    $('#business_leave').hide();
+                    stateDropdown.empty().append('<option value="">Select Department</option>');
+                    var entity_id = 0 ;
+                   
+                        // Fetch and populate states based on selected country
+                        $.ajax({
+                            url: "{{ route('department') }}",
+                            type: "GET",
+                            data: {
+                                entity_id: entity_id
+                            },
+                            success: function(response) {
+                                if (response.status === 200 && response.data) {
+                                    response.data.forEach(function(state) {
+                                        stateDropdown.append($('<option></option>').attr(
+                                            'value', state.sno)
+                                            .attr('data-erpdepartmentid', state.erp_department_id)
+                                            .text(state.department_name));
+                                    });
+                                    
+                                }
+                            },
+                            error: function(error) {
+                                console.error('Error fetching Department:', error);
+                            }
+                        });
+                    
+                }else{
+                    $('#business_leave').show();
+                }
+            });
+
+            $("#entity_id_leave").on('change', function() {
+                 var entity_id = $(this).val();
+                 var stateDropdown = $("#department_add_leave");
+
+                stateDropdown.empty().append('<option value="">Select Department</option>');
+
+                if (entity_id) {
+                    // Fetch and populate states based on selected country
+                    $.ajax({
+                        url: "{{ route('department') }}",
+                        type: "GET",
+                        data: {
+                            entity_id: entity_id
+                        },
+                        success: function(response) {
+                            if (response.status === 200 && response.data) {
+                                response.data.forEach(function(state) {
+                                    stateDropdown.append($('<option></option>').attr(
+                                        'value', state.sno)
+                                        .attr('data-erpdepartmentid', state.erp_department_id)
+                                        .text(state.department_name));
+                                });
+                                
+                            }
+                        },
+                        error: function(error) {
+                            console.error('Error fetching Department:', error);
+                        }
+                    });
+                }
+            });
+
+            $("#department_add_leave").on('change', function() {
+                 var departmentId = $(this).val();
+                    var type = $('#attendance_type_add').val();
+                    var custom_date = $('#custom_date_add').val();
+
+                    if(departmentId){
+                         $.ajax({
+                        url: "{{ route('staff_att') }}",
+                        type: "GET",
+                        data: {
+                            department_id: departmentId,
+                            type: type,
+                            date: custom_date,
+                        },
+                        success: function (response) {
+                            
+                            if (response.status === 200 && response.data) {
+                                var selectDropdown = $("#staff_add_leave");
+                                selectDropdown.empty().append('<option value="all">All</option>');
+                                response.data.forEach(function (k) {
+                                    selectDropdown.append($('<option></option>').attr('value', k.sno).text(k.staff_name + ' - ' + k.nick_name));
+                                });
+
+                            } else {
+                            }
+                        },
+                        error: function (error) {
+                            console.error('Error fetching staff:', error);
+                           
+                        }
+                    });
+                    }
+                   
+            });
+     });
+</script>
+
+<script>
+     $(document).ready(function() {
+        // Business dropdown
+            $("#company_id_pr").on('change', function() {
+               
+                 var countryId = $(this).val();
+                var entityDropdown = $("#entity_id_pr");
+
+                entityDropdown.empty().append('<option value="">Select Entity</option>');
+
+                if (countryId) {
+                    // Fetch and populate states based on selected country
+                    $.ajax({
+                        url: "{{ route('entity_list') }}",
+                        type: "GET",
+                        data: {
+                            company_id: countryId
+                        },
+                        success: function(response) {
+                            if (response.status === 200 && response.data) {
+                                response.data.forEach(function(state) {
+                                    entityDropdown.append($('<option></option>').attr(
+                                        'value', state.sno).text(state
+                                        .entity_name));
+                                });
+                                
+                            }
+                        },
+                        error: function(error) {
+                            console.error('Error fetching states:', error);
+                        }
+                    });
+                }
+
+             
+                var stateDropdown = $("#department_add_pr");
+                if (countryId == 'egc') {
+                    $('#business_pr').hide();
+                    stateDropdown.empty().append('<option value="">Select Department</option>');
+                    var entity_id = 0 ;
+                   
+                        // Fetch and populate states based on selected country
+                        $.ajax({
+                            url: "{{ route('department') }}",
+                            type: "GET",
+                            data: {
+                                entity_id: entity_id
+                            },
+                            success: function(response) {
+                                if (response.status === 200 && response.data) {
+                                    response.data.forEach(function(state) {
+                                        stateDropdown.append($('<option></option>').attr(
+                                            'value', state.sno)
+                                            .attr('data-erpdepartmentid', state.erp_department_id)
+                                            .text(state.department_name));
+                                    });
+                                    
+                                }
+                            },
+                            error: function(error) {
+                                console.error('Error fetching Department:', error);
+                            }
+                        });
+                    
+                }else{
+                    $('#business_pr').show();
+                }
+            });
+
+            $("#entity_id_pr").on('change', function() {
+                 var entity_id = $(this).val();
+                 var stateDropdown = $("#department_add_pr");
+
+                stateDropdown.empty().append('<option value="">Select Department</option>');
+
+                if (entity_id) {
+                    // Fetch and populate states based on selected country
+                    $.ajax({
+                        url: "{{ route('department') }}",
+                        type: "GET",
+                        data: {
+                            entity_id: entity_id
+                        },
+                        success: function(response) {
+                            if (response.status === 200 && response.data) {
+                                response.data.forEach(function(state) {
+                                    stateDropdown.append($('<option></option>').attr(
+                                        'value', state.sno)
+                                        .attr('data-erpdepartmentid', state.erp_department_id)
+                                        .text(state.department_name));
+                                });
+                                
+                            }
+                        },
+                        error: function(error) {
+                            console.error('Error fetching Department:', error);
+                        }
+                    });
+                }
+            });
+
+            $("#department_add_pr").on('change', function() {
+                 var departmentId = $(this).val();
+
+                    var type = $('#perm_attendance_type_add').val();
+                    var custom_date = $('#custom_date_add_pr').val();
+
+                    if(departmentId){
+                         $.ajax({
+                        url: "{{ route('staff_att') }}",
+                        type: "GET",
+                        data: {
+                            department_id: departmentId,
+                            type: type,
+                            date: custom_date,
+                        },
+                        success: function (response) {
+                            
+                            if (response.status === 200 && response.data) {
+                                var selectDropdown = $("#staff_add_pr");
+                                selectDropdown.empty().append('<option value="all">All</option>');
+                                response.data.forEach(function (k) {
+                                    selectDropdown.append($('<option></option>').attr('value', k.sno).text(k.staff_name + ' - ' + k.nick_name));
+                                });
+
+                            } else {
+                            }
+                        },
+                        error: function (error) {
+                            console.error('Error fetching staff:', error);
+                           
+                        }
+                    });
+                    }
+                   
+            });
+     });
+</script>
+
+
+
+<script>
+     $(document).ready(function() {
+        // Business dropdown
+            $("#company_id_od").on('change', function() {
+               
+                 var countryId = $(this).val();
+                var entityDropdown = $("#entity_id_od");
+
+                entityDropdown.empty().append('<option value="">Select Entity</option>');
+
+                if (countryId) {
+                    // Fetch and populate states based on selected country
+                    $.ajax({
+                        url: "{{ route('entity_list') }}",
+                        type: "GET",
+                        data: {
+                            company_id: countryId
+                        },
+                        success: function(response) {
+                            if (response.status === 200 && response.data) {
+                                response.data.forEach(function(state) {
+                                    entityDropdown.append($('<option></option>').attr(
+                                        'value', state.sno).text(state
+                                        .entity_name));
+                                });
+                                
+                            }
+                        },
+                        error: function(error) {
+                            console.error('Error fetching states:', error);
+                        }
+                    });
+                }
+
+             
+                var stateDropdown = $("#department_add_od");
+                if (countryId == 'egc') {
+                    $('#business_od').hide();
+                    stateDropdown.empty().append('<option value="">Select Department</option>');
+                    var entity_id = 0 ;
+                   
+                        // Fetch and populate states based on selected country
+                        $.ajax({
+                            url: "{{ route('department') }}",
+                            type: "GET",
+                            data: {
+                                entity_id: entity_id
+                            },
+                            success: function(response) {
+                                if (response.status === 200 && response.data) {
+                                    response.data.forEach(function(state) {
+                                        stateDropdown.append($('<option></option>').attr(
+                                            'value', state.sno)
+                                            .attr('data-erpdepartmentid', state.erp_department_id)
+                                            .text(state.department_name));
+                                    });
+                                    
+                                }
+                            },
+                            error: function(error) {
+                                console.error('Error fetching Department:', error);
+                            }
+                        });
+                    
+                }else{
+                    $('#business_od').show();
+                }
+            });
+
+            $("#entity_id_od").on('change', function() {
+                 var entity_id = $(this).val();
+                 var stateDropdown = $("#department_add_od");
+
+                stateDropdown.empty().append('<option value="">Select Department</option>');
+
+                if (entity_id) {
+                    // Fetch and populate states based on selected country
+                    $.ajax({
+                        url: "{{ route('department') }}",
+                        type: "GET",
+                        data: {
+                            entity_id: entity_id
+                        },
+                        success: function(response) {
+                            if (response.status === 200 && response.data) {
+                                response.data.forEach(function(state) {
+                                    stateDropdown.append($('<option></option>').attr(
+                                        'value', state.sno)
+                                        .attr('data-erpdepartmentid', state.erp_department_id)
+                                        .text(state.department_name));
+                                });
+                                
+                            }
+                        },
+                        error: function(error) {
+                            console.error('Error fetching Department:', error);
+                        }
+                    });
+                }
+            });
+
+            $("#department_add_od").on('change', function() {
+                 var departmentId = $(this).val();
+                    var type = $('#onduty_attendance_type_add').val();
+                    var custom_date = $('#custom_date_add_on').val();
+
+                    if(departmentId){
+                         $.ajax({
+                        url: "{{ route('staff_att') }}",
+                        type: "GET",
+                        data: {
+                            department_id: departmentId,
+                            type: type,
+                            date: custom_date,
+                        },
+                        success: function (response) {
+                           
+                            if (response.status === 200 && response.data) {
+                                var selectDropdown = $("#staff_add_od");
+                                selectDropdown.empty().append('<option value="all">All</option>');
+                                response.data.forEach(function (k) {
+                                    selectDropdown.append($('<option></option>').attr('value', k.sno).text(k.staff_name + ' - ' + k.nick_name));
+                                });
+
+                            } else {
+                                
+                            }
+                        },
+                        error: function (error) {
+                            console.error('Error fetching staff:', error);
+                            
+                           
+                        }
+                    });
+                    }
+                   
+            });
+     });
+</script>
+
+<script>
+    function mark_present_att_func() { 
+        $("#markPresentBtn").prop('disabled', true); // Disable the button
+    
+        let err = false; // Initialize error flag
+
+        var department_add = $('#department_add').val();
+        if(department_add == ''){
+            $('#department_add_err').text('Department is Required..!');
+            err=true;
+        }else{
+              $('#department_add_err').text('');
+        }
+
+         var staff_add = $('#staff_add').val();
+            if(staff_add == ''){
+                $('#staff_add_err').text('Staff is Required..!');
+                err=true;
+            }else{
+                $('#staff_add_err').text('');
+            }
+    
+        // If there's an error, enable the button again and exit the function
+        if (err) {
+            $("#markPresentBtn").prop('disabled', false);
+            return false;
+        }
+    
+        // Get the form data
+        var formData = $('#attendanceForm').serialize(); // Serialize form data
+    
+        // AJAX setup with CSRF token
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+    
+        // Perform AJAX request
+        $.ajax({
+            url: "{{ route('staff_attendance') }}", // Replace with your route
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.status === 200) {
+                    toastr.success(response.message); // Show success message
+                    location.reload(); // Reload page after success
+                } else {
+                    toastr.error('An error occurred while submitting the form.'); // Error message
+                    $("#markPresentBtn").prop('disabled', false); // Enable button if there's an error
+                }
+            },
+            error: function(xhr) {
+                toastr.error('An error occurred while submitting the form.'); // Handle AJAX error
+                console.error('Error:', xhr); // Log error for debugging
+                $("#markPresentBtn").prop('disabled', false); // Enable button in case of an error
+            }
+        });
+    }
+
+    function mark_absent_att_func() { 
+        $("#absentBtn").prop('disabled', true); // Disable the button
+    
+        let err = false; // Initialize error flag
+
+        var department_add_absent = $('#department_add_absent').val();
+        if(department_add_absent == ''){
+            $('#department_add_absent_err').text('Department is Required..!');
+            err=true;
+        }else{
+            $('#department_add_absent_err').text('');
+        }
+
+        var staff_add_absent = $('#staff_add_absent').val();
+            if(staff_add_absent == ''){
+                $('#staff_add_absent_err').text('Staff is Required..!');
+                err=true;
+            }else{
+                $('#staff_add_absent_err').text('');
+            }
+    
+        // If there's an error, enable the button again and exit the function
+        if (err) {
+            $("#absentBtn").prop('disabled', false);
+            return false;
+        }
+    
+        // Get the form data
+        var formData = $('#attendanceFormabsent').serialize(); // Serialize form data
+    
+        // AJAX setup with CSRF token
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+    
+        // Perform AJAX request
+        $.ajax({
+            url: "{{ route('staff_attendance') }}", // Replace with your route
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.status === 200) {
+                    toastr.success(response.message); // Show success message
+                    location.reload(); // Reload page after success
+                } else {
+                    toastr.error('An error occurred while submitting the form.'); // Error message
+                    $("#absentBtn").prop('disabled', false); // Enable button if there's an error
+                }
+            },
+            error: function(xhr) {
+                toastr.error('An error occurred while submitting the form.'); // Handle AJAX error
+                console.error('Error:', xhr); // Log error for debugging
+                $("#absentBtn").prop('disabled', false); // Enable button in case of an error
+            }
+        });
+    }
+
+    function mark_leave_att_func() { 
+        $("#leaveBtn").prop('disabled', true); // Disable the button
+    
+        let err = false; // Initialize error flag
+
+        var department_add_leave = $('#department_add_leave').val();
+        if(department_add_leave == ''){
+            $('#department_add_leave_err').text('Department is Required..!');
+            err=true;
+        }else{
+            $('#department_add_leave_err').text('');
+        }
+
+        var staff_add_leave = $('#staff_add_leave').val();
+            if(staff_add_leave == ''){
+                $('#staff_add_leave_err').text('Staff is Required..!');
+                err=true;
+            }else{
+                $('#staff_add_leave_err').text('');
+            }
+
+            var reason_leave = $('#reason_leave').val();
+            if(reason_leave == ''){
+                $('#reason_leave_err').text('Reason is Required..!');
+                err=true;
+            }else{
+                $('#reason_leave_err').text('');
+            }
+    
+        // If there's an error, enable the button again and exit the function
+        if (err) {
+            $("#leaveBtn").prop('disabled', false);
+            return false;
+        }
+    
+        // Get the form data
+        var formData = $('#attendanceFormleave').serialize(); // Serialize form data
+
+        // Define variables for staff ID and leave date based on the attendance type
+        var staffId = $('#staff_add_leave').val(); // Get selected staff_id
+        var attendanceType = $('#attendance_type_add').val();
+        var leaveDate;
+
+        // Determine leave date based on attendance type
+        if (attendanceType === 'today') {
+            leaveDate = "{{ date('Y-m-d') }}"; // Today's date
+        } else if (attendanceType === 'tomorrow') {
+            leaveDate = "{{ now()->addDay()->format('Y-m-d') }}"; // Tomorrow's date
+        } else if (attendanceType === 'custom') {
+            leaveDate = $('#custom_date_add').val(); // Custom date from input
+        }
+
+    
+        // AJAX setup with CSRF token
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+    
+        // Perform AJAX request
+        $.ajax({
+            url: "{{ route('staff_attendance') }}", // Replace with your route
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.status === 200) {
+                    toastr.success(response.message); // Show success message
+                    location.reload(); // Reload page after success
+                } else {
+                    toastr.error('An error occurred while submitting the form.'); // Error message
+                    $("#leaveBtn").prop('disabled', false); // Enable button if there's an error
+                }
+            },
+            error: function(xhr) {
+                toastr.error('An error occurred while submitting the form.'); // Handle AJAX error
+                console.error('Error:', xhr); // Log error for debugging
+                $("#leaveBtn").prop('disabled', false); // Enable button in case of an error
+            }
+        });
+    }
+
+     function mark_pr_att_func() { 
+        $("#prBtn").prop('disabled', true); // Disable the button
+    
+        let err = false; // Initialize error flag
+
+        var department_add_pr = $('#department_add_pr').val();
+        if(department_add_pr == ''){
+            $('#department_add_pr_err').text('Department is Required..!');
+            err=true;
+        }else{
+            $('#department_add_pr_err').text('');
+        }
+
+        var staff_add_pr = $('#staff_add_pr').val();
+            if(staff_add_pr == ''){
+                $('#staff_add_pr_err').text('Staff is Required..!');
+                err=true;
+            }else{
+                $('#staff_add_pr_err').text('');
+            }
+
+             var perm_st_time_add = $('#perm_st_time_add').val();
+            if(perm_st_time_add == ''){
+                $('#perm_st_time_add_err').text('Start Time is Required..!');
+                err=true;
+            }else{
+                $('#perm_st_time_add_err').text('');
+            }
+
+             var perm_ed_time_add = $('#perm_ed_time_add').val();
+            if(perm_ed_time_add == ''){
+                $('#perm_ed_time_add_err').text('End Time is Required..!');
+                err=true;
+            }else{
+                $('#perm_ed_time_add_err').text('');
+            }
+
+            var pr_reason = $('#pr_reason').val();
+            if(pr_reason == ''){
+                $('#pr_reason_err').text('Reason is Required..!');
+                err=true;
+            }else{
+                $('#pr_reason_err').text('');
+            }
+    
+        // If there's an error, enable the button again and exit the function
+        if (err) {
+            $("#prBtn").prop('disabled', false);
+            return false;
+        }
+    
+        // Get the form data
+        var formData = $('#attendanceFormpermission').serialize(); // Serialize form data
+
+        // Define variables for staff ID and leave date based on the attendance type
+          var staffId = $('#staff_add_pr').val(); // Get selected staff_id
+        var attendanceType = $('#perm_attendance_type_add').val();
+        var startTime = $('#perm_st_time_add').val(); // Get selected staff_id
+        var endtime = $('#perm_ed_time_add').val(); // Get selected staff_id
+        var prDate;
+
+        // Determine leave date based on attendance type
+        if (attendanceType === 'today') {
+            prDate = "{{ date('Y-m-d') }}"; // Today's date
+        } else if (attendanceType === 'tomorrow') {
+            prDate = "{{ now()->addDay()->format('Y-m-d') }}"; // Tomorrow's date
+        } else if (attendanceType === 'custom') {
+            prDate = $('#custom_date_add_pr').val(); // Custom date from input
+        }
+
+    
+        // AJAX setup with CSRF token
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+    
+        // Perform AJAX request
+        $.ajax({
+            url: "{{ route('staff_attendance') }}", // Replace with your route
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.status === 200) {
+                    toastr.success(response.message); // Show success message
+                    location.reload(); // Reload page after success
+                } else {
+                    toastr.error('An error occurred while submitting the form.'); // Error message
+                    $("#prBtn").prop('disabled', false); // Enable button if there's an error
+                }
+            },
+            error: function(xhr) {
+                toastr.error('An error occurred while submitting the form.'); // Handle AJAX error
+                console.error('Error:', xhr); // Log error for debugging
+                $("#prBtn").prop('disabled', false); // Enable button in case of an error
+            }
+        });
+    }
+
+     function mark_onDuty_att_func() { 
+        $("#odDutyBtn").prop('disabled', true); // Disable the button
+    
+        let err = false; // Initialize error flag
+
+        var department_add_od = $('#department_add_od').val();
+        if(department_add_od == ''){
+            $('#department_add_od_err').text('Department is Required..!');
+            err=true;
+        }else{
+            $('#department_add_od_err').text('');
+        }
+
+        var staff_add_od = $('#staff_add_od').val();
+            if(staff_add_od == ''){
+                $('#staff_add_od_err').text('Staff is Required..!');
+                err=true;
+            }else{
+                $('#staff_add_od_err').text('');
+            }
+
+             var onduty_st_time_add = $('#onduty_st_time_add').val();
+            if(onduty_st_time_add == ''){
+                $('#onduty_st_time_add_err').text('Start Time is Required..!');
+                err=true;
+            }else{
+                $('#onduty_st_time_add_err').text('');
+            }
+
+             var onduty_ed_time_add = $('#onduty_ed_time_add').val();
+            if(onduty_ed_time_add == ''){
+                $('#onduty_ed_time_add_err').text('End Time is Required..!');
+                err=true;
+            }else{
+                $('#onduty_ed_time_add_err').text('');
+            }
+
+            var od_reason = $('#od_reason').val();
+            if(od_reason == ''){
+                $('#od_reason_err').text('Reason is Required..!');
+                err=true;
+            }else{
+                $('#od_reason_err').text('');
+            }
+    
+        // If there's an error, enable the button again and exit the function
+        if (err) {
+            $("#odDutyBtn").prop('disabled', false);
+            return false;
+        }
+    
+        // Get the form data
+        var formData = $('#attendanceFormonduty').serialize(); // Serialize form data
+
+         var staffId = $('#staff_add_od').val(); // Get selected staff_id
+        var attendanceType = $('#onduty_attendance_type_add').val();
+        var startTime = $('#onduty_st_time_add').val(); // Get selected staff_id
+        var endtime = $('#onduty_ed_time_add').val(); // Get selected staff_id
+        var odDate;
+
+        // Determine leave date based on attendance type
+        if (attendanceType === 'today') {
+            odDate = "{{ date('Y-m-d') }}"; // Today's date
+        } else if (attendanceType === 'tomorrow') {
+            odDate = "{{ now()->addDay()->format('Y-m-d') }}"; // Tomorrow's date
+        } else if (attendanceType === 'custom') {
+            odDate = $('#custom_date_add_on').val(); // Custom date from input
+        }
+
+    
+        // AJAX setup with CSRF token
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+    
+        // Perform AJAX request
+        $.ajax({
+            url: "{{ route('staff_attendance') }}", // Replace with your route
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.status === 200) {
+                    toastr.success(response.message); // Show success message
+                    location.reload(); // Reload page after success
+                } else {
+                    toastr.error('An error occurred while submitting the form.'); // Error message
+                    $("#odDutyBtn").prop('disabled', false); // Enable button if there's an error
+                }
+            },
+            error: function(xhr) {
+                toastr.error('An error occurred while submitting the form.'); // Handle AJAX error
+                console.error('Error:', xhr); // Log error for debugging
+                $("#odDutyBtn").prop('disabled', false); // Enable button in case of an error
+            }
+        });
+    }
+
+</script>
 @endsection
