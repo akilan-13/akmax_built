@@ -23,7 +23,13 @@
 @endsection
 
 @section('content')
-
+@php
+  
+    $helper = new \App\Helpers\Helpers();
+    $common_date_format = $helper->general_setting_data()->date_format ?? 'd-M-y';
+    $user_id = auth()->user()->user_id ;
+    $auth_id = auth()->user()->id ;
+  @endphp
     <style>
         .sticky_table thead th:not(:first-child):not(:last-child) {
             text-align: center;
@@ -187,8 +193,8 @@
                             </li>
                         </ul>
                     </div>
-                    <a href="javascript:;" class="btn btn-sm fw-bold btn-primary text-white" data-bs-toggle="modal" data-bs-target="#kt_modal_upload_essl"  data-bs-toggle="tooltip" data-bs-placement="bottom" title="Upload">
-                        <span class="me-2"><i class="mdi mdi-plus"></i></span>Upload ESSL
+                     <a href="javascript:;" class="btn btn-sm fw-bold btn-primary text-white" data-bs-toggle="modal" data-bs-target="#kt_modal_upload_essl"  data-bs-toggle="tooltip" data-bs-placement="bottom" title="Upload">
+                        <span class="me-2"><i class="mdi mdi-file-upload"></i></span>Upload ESSL
                     </a>
                     <a href="javascript:;" class="btn btn-sm fw-bold btn-primary text-white" data-bs-toggle="dropdown"
                         aria-haspopup="true" aria-expanded="false">
@@ -196,44 +202,15 @@
                     </a>
                     <div class="dropdown-menu dropdown-menu-end" style="width: 200px;">
                         <a href="javascript:;" class="dropdown-item" data-bs-toggle="modal"
-                            data-bs-target="#kt_modal_attendance_present">
-                            <span class="d-flex gap-2">
-                            <label class="badge bg-label-success text-black border border-success fw-bold px-3  py-1"><span>P</span></label>
-                            <span>Present</span>
-                            </span>
-                        </a>
+                            data-bs-target="#kt_modal_attendance_present">Present</a>
                         <a href="javascript:;" class="dropdown-item" data-bs-toggle="modal"
-                            data-bs-target="#kt_modal_attendance_absent">
-                            <span class="d-flex gap-2">
-                                <label class="badge bg-label-danger text-black border border-danger fw-bold px-3  py-1"><span>A</span></label>
-                                <span>Absent</span>
-                            </span>
-                        </a>
+                            data-bs-target="#kt_modal_attendance_absent">Absent</a>
                         <a href="javascript:;" class="dropdown-item" data-bs-toggle="modal"
-                            data-bs-target="#kt_modal_attendance_leave">
-                            <span class="d-flex gap-2">
-                                <label class="badge bg-label-warning text-black border border-warning fw-bold px-3  py-1"><span>L</span></label>
-                                <span>Leave</span>
-                            </span>
-                        </a>
+                            data-bs-target="#kt_modal_attendance_leave">Leave</a>
                         <a href="javascript:;" class="dropdown-item" data-bs-toggle="modal"
-                            data-bs-target="#kt_modal_attendance_permission">
-                            <span class="d-flex gap-2">
-                                <label><span class="badge text-black fw-bold px-3  py-1"
-                                style="background-color: #DCE2FC; border:1px solid #2856FA;">Pr</span></label>
-                                <span>Permission</span>
-                            </span>
-                        </a>
+                            data-bs-target="#kt_modal_attendance_permission">Permission</a>
                         <a href="javascript:;" class="dropdown-item" data-bs-toggle="modal"
-                            data-bs-target="#kt_modal_attendance_onduty">
-                            <span class="d-flex gap-2">
-                                <label>
-                                    <span class="badge text-black fw-bold px-3  py-1"
-                                        style="background-color: #EDD4FF; border:1px solid #9C2DEB">OD</span>
-                                </label>
-                                <span>On Duty</span>
-                            </span>
-                        </a>
+                            data-bs-target="#kt_modal_attendance_onduty">On Duty</a>
                     </div>
                 </div>
                 <div class="d-flex justify-content-end align-items-center text-black gap-2">
@@ -243,13 +220,15 @@
                         <span class="fs-6 fw-semibold ms-1">Present</span>
                     </div>
                     <div class=" d-flex align-items-center justify-content-center me-3">
-                        <label class="badge bg-label-danger text-black border border-danger fw-bold px-3  py-1"><span>A</span></label>
+                        <label
+                            class="badge bg-label-danger text-black border border-danger fw-bold px-3  py-1"><span>A</span></label>
                         <span class="fs-6 fw-semibold ms-1">Absent</span>
                         <a href="javascipt:;" data-bs-toggle="tooltip" data-bs-placement="bottom"
                             title="Leave without intimation"><i class="mdi mdi mdi-information text-dark"></i></a>
                     </div>
                     <div class="d-flex align-items-center justify-content-center me-3">
-                        <label class="badge bg-label-warning text-black border border-warning fw-bold px-3  py-1"><span>L</span></label>
+                        <label
+                            class="badge bg-label-warning text-black border border-warning fw-bold px-3  py-1"><span>L</span></label>
                         <span class="fs-6 fw-semibold ms-1">Leave</span>
                         <a href="javascipt:;" data-bs-toggle="tooltip" data-bs-placement="bottom"
                             title="Leave with intimation"><i class="mdi mdi mdi-information text-dark"></i></a>
@@ -339,7 +318,7 @@
                                 <div class="col-lg-6">
                                     <label class="text-dark mb-1 fs-6 fw-semibold">Company<span
                                             class="text-danger">*</span></label>
-                                    <select id="company_fill" name="company_fill" class="select3 form-select" onchange="loadAttendance(1)">
+                                    <select id="company_fill" name="company_fill" class="select3 form-select" >
                                         <option value="egc">Elysium Groups of Companies</option>
                                         @if(isset($company_list))
                                         @foreach($company_list as $clist)
@@ -360,27 +339,27 @@
                         <div class="col-lg-6 attendance-cards d-flex align-items-center justify-content-between gap-2">
 
                           <div class="d-flex flex-column gap-1 mb-0 border border-success p-2 rounded bg-label-success text-center card-attendance">
-                            <label class="fw-bold text-black percent-value">90%</label>
+                            <label class="fw-bold text-black percent-value" id="total_present_company">00%</label>
                             <label class="text-black fw-semibold fs-8">Present</label>
                           </div>
 
                           <div class="d-flex flex-column gap-1 mb-0 border border-danger p-2 rounded bg-label-danger text-center card-attendance">
-                            <label class="fw-bold text-black percent-value">03%</label>
+                            <label class="fw-bold text-black percent-value" id="total_absent_company">00%</label>
                             <label class="text-black fw-semibold fs-8">Absent</label>
                           </div>
 
                           <div class="d-flex flex-column gap-1 mb-0 p-2 rounded card-attendance" style="background: #DCE2FC; border:1px solid #2856FA; text-align:center;">
-                            <label class="fw-bold text-black percent-value" style="color:#2856FA;">02%</label>
+                            <label class="fw-bold text-black percent-value" style="color:#2856FA;" id="total_pr_company">00%</label>
                             <label class="text-black fw-semibold fs-8">Permission</label>
                           </div>
 
                           <div class="d-flex flex-column gap-1 mb-0 border border-warning p-2 rounded bg-label-warning text-center card-attendance">
-                            <label class="fw-bold text-black percent-value">04%</label>
+                            <label class="fw-bold text-black percent-value" id="total_leave_company">00%</label>
                             <label class="text-black fw-semibold fs-8">Leave</label>
                           </div>
 
                           <div class="d-flex flex-column gap-1 mb-0 p-2 rounded card-attendance" style="background: #EDD4FF; border:1px solid #9C2DEB; text-align:center;">
-                            <label class="fw-bold text-black percent-value" style="color:#9C2DEB;">01%</label>
+                            <label class="fw-bold text-black percent-value" style="color:#9C2DEB;" id="total_od_company">00%</label>
                             <label class="text-black fw-semibold fs-8">On Duty</label>
                           </div>
                         </div>
@@ -454,80 +433,82 @@
         </div>
     </div>
 
-        <div class="modal fade" id="kt_modal_upload_essl" tabindex="-1" aria-hidden="true" data-bs-keyboard="false" data-bs-backdrop="static">
-          <!--begin::Modal dialog-->
-          <div class="modal-dialog modal-md">
-              <!--begin::Modal content-->
-              <div class="modal-content rounded">
-                  <!--begin::Modal header-->
-                  <div class="modal-header justify-content-end border-0 pb-0">
-                      <!--begin::Close-->
-                      <div class="btn btn-sm btn-icon btn-active-color-primary" data-bs-dismiss="modal">
-                          <!--begin::Svg Icon | path: icons/duotune/arrows/arr061.svg-->
-                          <span class="svg-icon svg-icon-1">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)" fill="currentColor" />
-                                  <rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="currentColor" />
-                              </svg>
-                          </span>
-                          <!--end::Svg Icon-->
-                      </div>
-                      <!--end::Close-->
-                  </div>
-                  <!--end::Modal header-->
-                  <!--begin::Modal body-->
-                  <div class="modal-body pt-0 pb-10 px-10 px-xl-20">
-                      <!--begin::Heading-->
-                      <div class="mb-4 text-center">
-                          <h3 class="text-center mb-4 text-black">Upload Documents</h3>
-                      </div>
-                      <div class="text-center">
-                          <span>
-                              <label class="badge bg-warning text-black rounded fw-bold" id="upload_chap_course_name"></label>
-                              <input type="hidden" name="upload_chap_course_id" id="upload_chap_course_id">
-                          </span>
-                      </div>
-                      <form id="uploadMaterialForm" method="POST" enctype="multipart/form-data" autocomplete="off">
-                          @csrf 
-                          <div class="row mt-2">
-                          
+
+    <div class="modal fade" id="kt_modal_upload_essl" tabindex="-1" aria-hidden="true" data-bs-keyboard="false" data-bs-backdrop="static">
+        <!--begin::Modal dialog-->
+        <div class="modal-dialog modal-md">
+            <!--begin::Modal content-->
+            <div class="modal-content rounded">
+                <!--begin::Modal header-->
+                <div class="modal-header justify-content-end border-0 pb-0">
+                    <!--begin::Close-->
+                    <div class="btn btn-sm btn-icon btn-active-color-primary" data-bs-dismiss="modal">
+                        <!--begin::Svg Icon | path: icons/duotune/arrows/arr061.svg-->
+                        <span class="svg-icon svg-icon-1">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)" fill="currentColor" />
+                                <rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="currentColor" />
+                            </svg>
+                        </span>
+                        <!--end::Svg Icon-->
+                    </div>
+                    <!--end::Close-->
+                </div>
+                <!--end::Modal header-->
+                <!--begin::Modal body-->
+                <div class="modal-body pt-0 pb-10 px-10 px-xl-20">
+                    <!--begin::Heading-->
+                    <div class="mb-4 text-center">
+                        <h3 class="text-center mb-4 text-black">Upload ESSL</h3>
+                    </div>
+                    <div class="text-center">
+                        <span>
+                            <label class="badge bg-warning text-black rounded fw-bold" id="upload_chap_course_name"></label>
+                            <input type="hidden" name="upload_chap_course_id" id="upload_chap_course_id">
+                        </span>
+                    </div>
+                    <form id="uploadMaterialForm" method="POST" enctype="multipart/form-data" autocomplete="off">
+                        @csrf 
+                        <div class="row mt-2">
                         
-                            <!-- File Upload -->
-                            <div class="col-lg-12 mb-3">
-                              <label class="text-dark mb-1 fs-6 fw-semibold">Documents<span class="text-danger">*</span></label>
-                              <div id="dropArea" class="border border-4 border-dashed p-5 text-center rounded">
-                                <p class="mb-2">Drag & Drop your files here or click to select</p>
-                                <input type="file" id="fileInput" name="file_upload" class="d-none"  />
-                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
-                                  Browse Files
-                                </button>
-                              </div>
-                              <div id="fileList" class="text-muted"></div>
-                              <div class="text-danger" id="err_mssg"></div>
+                    
+                        <!-- File Upload -->
+                        <div class="col-lg-12 mb-3">
+                            <label class="text-dark mb-1 fs-6 fw-semibold">Essl File<span class="text-danger">*</span></label>
+                            <div id="dropArea" class="border border-4 border-dashed p-5 text-center rounded">
+                            <p class="mb-2">Drag & Drop your files here or click to select</p>
+                            <div class="small text-center mb-2">Allowed excel,.xls,.xlsx,.xlsm,.csv </div>
+                            <input type="file" id="fileInput" name="file_upload" class="d-none" accept=".xls,.xlsx,.xlsm,.csv"/>
+                            <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                                Browse Files
+                            </button>
                             </div>
-                          </div>
-                        
-                          <!-- Footer -->
-                          <div class="row">
-                            <div class="d-flex justify-content-center align-items-center mt-4">
-                              <button type="reset" class="btn btn-secondary me-3" data-bs-dismiss="modal">Cancel</button>
-                              <div class="position-relative">
-                                <button type="submit" class="btn btn-primary" id="uploadButton">Upload</button>
-                                <div id="uploadLoader" class="import-loader d-none">
-                                  <div class="spinner-border text-light" role="status"></div>
-                                  <span class="ms-2"></span>
-                                </div>
-                              </div>
+                            <div id="fileList" class="text-muted"></div>
+                            <div class="text-danger" id="err_mssg"></div>
+                        </div>
+                        </div>
+                    
+                        <!-- Footer -->
+                        <div class="row">
+                        <div class="d-flex justify-content-center align-items-center mt-4">
+                            <button type="reset" class="btn btn-secondary me-3" data-bs-dismiss="modal">Cancel</button>
+                            <div class="position-relative">
+                            <button type="submit" class="btn btn-primary" id="uploadButton">Upload</button>
+                            <div id="uploadLoader" class="import-loader d-none">
+                                <div class="spinner-border text-light" role="status"></div>
+                                <span class="ms-2"></span>
                             </div>
-                          </div>
-                        </form>
-                  </div>
-                  <!--end::Modal body-->
-              </div>
-              <!--end::Modal content-->
-          </div>
-          <!--end::Modal dialog-->
+                            </div>
+                        </div>
+                        </div>
+                    </form>
+                </div>
+                <!--end::Modal body-->
+            </div>
+            <!--end::Modal content-->
         </div>
+        <!--end::Modal dialog-->
+    </div>
 
     <!--begin::Modal -  Mark Present Attendance  -->
     <div class="modal fade" id="kt_modal_attendance_present" tabindex="-1" aria-hidden="true" data-bs-keyboard="false"
@@ -1434,17 +1415,13 @@
                 <!--end::Close-->
                 <!--begin::Modal header-->
                 <div class="modal-header d-flex align-items-center justify-content-between border-bottom-1">
-                    <div class="d-flex flex-column">
+                    <div class="d-flex align-items-center mb-2 gap-2">
                         <div class="avatar-stack">
-                            <img src="{{ asset('assets/egc_images/auth/user_3.png') }}" alt="user-avatar"
-                                class="avatar-img" />
-                            <img src="#" alt="user-avatar"
-                                class="avatar-img" />
-                            <img src="#" alt="user-avatar"
+                            <img src="{{ asset('assets/egc_images/auth/user_3.png') }}" id="view_staff_image" alt="user-avatar"
                                 class="avatar-img" />
                         </div>
-                        <div class="row mb-2">
-                            <h3 class="text-black">View Staff Attendance</h3>
+                        <div class="">
+                            <span class="text-black fw-semibold fs-3">View Staff Attendance</span>
                         </div>
                     </div>
                 </div>
@@ -1485,34 +1462,52 @@
                                     <!-- Left side -->
                                     <div class="col-lg-8">
                                         <div class="row mb-2">
-                                            <label class="col-5 fw-semibold fs-7 text-dark">Department</label>
-                                            <label class="col-1 fw-semibold fs-7">:</label>
-                                            <label class="col-6 fw-semibold fs-6 text-black">Production</label>
+                                            <label class="col-5  text-dark fs-7 fw-semibold">Department</label>
+                                            <label class="col-1 text-black fs-7 fw-semibold">:</label>
+                                            <div class="col-6">
+                                                <div class="skeleton-loader-view max-w-75" id="view_department_skeleton"></div>
+                                                <div class="text-truncate max-w-75 text-black fs-6 fw-semibold view-data"
+                                                    data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                                    title="" id="view_department" style="display:none;">
+                                                    Production
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="row mb-2">
-                                            <label class="col-5 fw-semibold fs-7 text-dark">Overall Percentage</label>
-                                            <label class="col-1 fw-semibold fs-7">:</label>
-                                            <label class="col-6 fw-semibold fs-6 text-primary">96%</label>
+                                            <label class="col-5  text-dark fs-7 fw-semibold">Overall Percentage</label>
+                                            <label class="col-1 text-black fs-7 fw-semibold">:</label>
+                                            <div class="col-6">
+                                                <div class="skeleton-loader-view max-w-75" id="view_overallPercentage_skeleton"></div>
+                                                <div class="text-truncate max-w-75 text-black fs-6 fw-semibold view-data"
+                                                    data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                                    title="" id="view_overallPercentage" style="display:none;">
+                                                    96%
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="row mb-2">
-                                            <label class="col-5 fw-semibold fs-7 text-dark">Weekoff</label>
-                                            <label class="col-1 fw-semibold fs-7">:</label>
-                                            <label class="col-6 fw-semibold fs-6 text-black">Tuesday</label>
+                                            <label class="col-5  text-dark fs-7 fw-semibold">Company</label>
+                                            <label class="col-1 text-black fs-7 fw-semibold">:</label>
+                                            <div class="col-6">
+                                                <div class="skeleton-loader-view max-w-75" id="view_branchName_skeleton"></div>
+                                                <div class="text-truncate max-w-75 text-black fs-6 fw-semibold view-data"
+                                                    data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                                    title="" id="view_branchName" style="display:none;">
+                                                    Madurai, Anna Nagar
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="row mb-2">
-                                            <label class="col-5 fw-semibold fs-7 text-dark">Branch</label>
-                                            <label class="col-1 fw-semibold fs-7">:</label>
-                                            <label class="col-6 fw-semibold fs-6 text-black">Madurai, Anna Nagar</label>
-                                        </div>
-                                        <div class="row mb-2">
-                                            <label class="col-5 fw-semibold fs-7 text-dark">Mobile No</label>
-                                            <label class="col-1 fw-semibold fs-7">:</label>
-                                            <label class="col-6 fw-semibold fs-6 text-black">9898745120</label>
-                                        </div>
-                                        <div class="row mb-2">
-                                            <label class="col-5 fw-semibold fs-7 text-dark">Shift Time</label>
-                                            <label class="col-1 fw-semibold fs-7">:</label>
-                                            <label class="col-6 fw-semibold fs-6 text-black">Morning Shift I</label>
+                                            <label class="col-5  text-dark fs-7 fw-semibold">Mobile No</label>
+                                            <label class="col-1 text-black fs-7 fw-semibold">:</label>
+                                            <div class="col-6">
+                                                <div class="skeleton-loader-view max-w-75" id="view_mobile_no_skeleton"></div>
+                                                <div class="text-truncate max-w-75 text-black fs-6 fw-semibold view-data"
+                                                    data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                                    title="" id="view_mobile_no" style="display:none;">
+                                                    9898745120
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1523,11 +1518,14 @@
                                                 <div class="image-input image-input-circle" data-kt-image-input="true">
                                                     <img src="{{ asset('assets/egc_images/auth/user_3.png') }}"
                                                         alt="user-avatar" class="w-px-150 h-auto rounded-circle"
-                                                        id="uploadedlogo" style="border: 2px solid #ab2b22;" />
+                                                        id="view_staff_profile_image" style="border: 2px solid #ab2b22;" />
                                                 </div>
                                             </div>
                                             <div class="text-center">
-                                                <label class="fs-7 text-black fw-semibold text-primary">Arun MK</label>
+                                                <div class="w-100px">
+                                                    <div class="skeleton-loader-view " id="view_staff_name_skeleton"></div>
+                                                    <label class="fs-7 text-black fw-semibold text-primary" id="view_staff_name" style="display:none;">Arun MK</label>  
+                                                </div>
                                             </div>
                                         </div>
 
@@ -1645,7 +1643,21 @@
                                                   <th class="min-w-100px">Reason</th>
                                               </tr>
                                           </thead>
-                                          <tbody class="text-gray-600 fw-semibold fs-7">
+                                          <tbody class="text-gray-600 fw-semibold fs-7" id="list-view-attendance-month">
+                                            <tr class="skeleton-loader" id="skeleton-loader">                             
+                                                <td class="skeleton-cell">
+                                                    <div class="skeleton"></div>
+                                                </td>
+                                                <td class="skeleton-cell">
+                                                    <div class="skeleton"></div>
+                                                </td>
+                                                <td class="skeleton-cell">
+                                                    <div class="skeleton"></div>
+                                                </td>
+                                                <td class="skeleton-cell">
+                                                    <div class="skeleton"></div>
+                                                </td>
+                                            </tr>
                                               <tr>
                                                   <td>
                                                     <label class="fw-semibold fs-7 text-nowrap">Jan 4</label>
@@ -1848,9 +1860,9 @@
                         <div class="avatar-stack">
                             <img src="{{ asset('assets/egc_images/auth/user_3.png') }}" alt="user-avatar"
                                 class="avatar-img" />
-                            <img src="{{ asset('assets/newImgs/user_8.jfif') }}" alt="user-avatar"
+                            <img src="{{ asset('assets/egc_images/auth/user_3.png') }}" alt="user-avatar"
                                 class="avatar-img" />
-                            <img src="{{ asset('assets/newImgs/user_4.png') }}" alt="user-avatar"
+                            <img src="{{ asset('assets/egc_images/auth/user_3.png') }}" alt="user-avatar"
                                 class="avatar-img" />
                         </div>
                         <div class="row mb-2">
@@ -2843,6 +2855,9 @@
                 </div>
                 <!--end::Modal header-->
                 <!--begin::Modal body-->
+                <form method="POST" enctype="multipart/form-data" autocomplete="off" data-track-percentage
+                    id="updateAttendanceForm">
+                    @csrf
                 <div class="modal-body pt-0 pb-10 px-10 px-xl-20">
                     <div class="row">
 
@@ -2851,17 +2866,14 @@
                         <div class="d-flex align-items-center justify-content-start">
                             <div class="avatar-xl mt-3">
                                 <img src="{{ asset('assets/egc_images/auth/user_3.png') }}" alt="user image"
-                                    class="w-px-50 h-auto rounded-circle ">
+                                    class="w-px-50 h-auto rounded-circle " id="update_staff_image">
                             </div>
                             <div
                                 class=" d-flex flex-column justify-content-between align-items-start gap-1">
                                 <a href="javascript:;" data-bs-toggle="modal"
                                     data-bs-target="#kt_modal_view_individual_staff_attendance">
-                                    <span class="fs-5 me-1 text-black">Arun MK</span>
+                                    <span class="fs-5 me-1 text-black" id="update_staff_name">Arun MK</span>
                                 </a>
-                                {{-- <span class="badge bg-warning text-white fs-8 me-1"
-                                    data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                    title="Department Name">Production</span> --}}
 
                             </div>
                         </div>
@@ -2869,43 +2881,47 @@
 
                       <div class="col-lg-6 mb-3">
                         <div class="row mb-2">
-                          <label class="col-4 fs-7 fw-semibold">Branch</label>
+                          <label class="col-4 fs-7 fw-semibold">Company</label>
                           <label class="col-1 fs-7 fw-bold text-center">:</label>
-                          <label class="col-7 fs-6 fw-bold" id="staff_branch">Elysium Academy Madurai</label>
+                          <label class="col-7 fs-6 fw-bold" id="update_staff_company">Elysium Academy Madurai</label>
+                        </div>
+                        <div class="row mb-2">
+                          <label class="col-4 fs-7 fw-semibold">Entity</label>
+                          <label class="col-1 fs-7 fw-bold text-center">:</label>
+                          <label class="col-7 fs-6 fw-bold" id="update_staff_entity">Elysium Academy Madurai</label>
                         </div>
                         <div class="row mb-2">
                           <label class="col-4 fs-7 fw-semibold">Department</label>
                           <label class="col-1 fs-7 fw-bold text-center">:</label>
-                          <label class="col-7 fs-6 fw-bold" id="staff_department">Production</label>
+                          <label class="col-7 fs-6 fw-bold" id="update_staff_department">Production</label>
                         </div>
                       </div>
-
+                        <input type="hidden" name="staff_id" id="update_staff_id">
                       <!-- Date -->
                       <div class="col-lg-6 mb-3">
                         <label class="text-dark mb-1 fs-6 fw-semibold">Date<span class="text-danger">*</span></label>
                         <div class="input-group input-group-merge">
                           <span class="input-group-text"><i class="mdi mdi-calendar-month-outline fs-4"></i></span>
-                          <input type="text" id="attendance_date_edit" name="attendance_date_edit" placeholder="Select Date" class="form-control date_att_up">
+                          <input type="text" id="attendance_date_edit" name="attendance_date_edit" placeholder="Select Date" class="form-control date_att_up" value ="<?php echo date('d-m-Y') ?>" onchange="dateChangeUpdate()">
                         </div>
                       </div>
 
                       <!-- Entry Dropdown -->
                       <div class="col-lg-6 mb-3">
                         <label class="text-dark mb-1 fs-6 fw-semibold">Entry<span class="text-danger">*</span></label>
-                        <select id="entry_select_edit" name="entry_select_edit" class="form-select" onchange="updateAttendanceUI(this.value)">
-                          <option value="present" selected>Present</option>
-                          <option value="absent">Absent (Leave Without Intimation)</option>
-                          <option value="on_duty">On Duty</option>
-                          <option value="permission">Permission</option>
-                          <option value="leave">Leave (Leave With Intimation)</option>
-                          <option value="workoff">Work Off</option>
+                        <select id="entry_select_edit" name="entry_select" class="form-select select3" onchange="updateAttendanceUI(this.value)">
+                          <option value="1">Present</option>
+                          <option value="2">Absent (Leave Without Intimation)</option>
+                          <option value="3">On Duty</option>
+                          <option value="4">Permission</option>
+                          <option value="5">Leave (Leave With Intimation)</option>
                         </select>
                       </div>
 
                       <!-- Start Time -->
                       <div class="col-lg-3 mb-3 type_st_dt_edit" style="display: none;">
                         <label class="text-dark mb-1 fs-6 fw-semibold">Start Time<span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" placeholder="HH:MM" id="Startflatpickr-time" />
+                        <input type="text" class="form-control"  id="update_st_time" name="st_time" placeholder="HH:MM" id="Startflatpickr-time" />
                       </div>
 
 
@@ -2913,21 +2929,25 @@
                       <!-- End Time -->
                       <div class="col-lg-3 mb-3 type_end_dt_edit" style="display: none;">
                         <label class="text-dark fs-6 mb-1 fw-semibold">End Time<span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" placeholder="HH:MM" id="Endflatpickr-time" />
+                        <input type="text" class="form-control" placeholder="HH:MM" id="Endflatpickr-time" id="update_end_time" name="end_time"  />
                       </div>
 
                       <!-- Reason -->
                       <div class="col-lg-6 mb-3 reason_edit" style="display: none;">
                         <label class="text-dark mb-1 fs-6 fw-semibold">Reason<span class="text-danger">*</span></label>
-                        <textarea class="form-control" rows="1" id="reason_edit" name="reason_edit" placeholder="Enter Reason"></textarea>
+                        <textarea class="form-control" rows="1" id="reason_edit" name="reason" placeholder="Enter Reason"></textarea>
                       </div>
 
                     </div>
                     <div class="d-flex justify-content-between align-items-center mt-4">
                         <button type="reset" class="btn btn-outline-danger text-primary me-3" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" id="create_sms_btn" class="btn btn-primary" data-bs-dismiss="modal">Update Attendance</button>
+                        <a href="javascript:;" id="submitStaffBtn" class="btn btn-primary" onclick="updateAttendanceFunc()">
+                            <span id="yesBtnText">Update Attendance</span>
+                            <span id="yesBtnLoader" style="display: none;" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        </a>
                     </div>
                 </div>
+                </form>
 
                 <!--end::Modal body-->
             </div>
@@ -2936,138 +2956,7 @@
         <!--end::Modal dialog-->
     </div>
     <!--end::Modal -  Mark Present Attendance -->
-<script>
-  const dropArea = document.getElementById("dropArea");
-  const fileInput = document.getElementById("fileInput");
-  const fileList = document.getElementById("fileList");
 
-  // Highlight drop area when dragging files
-  dropArea.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      dropArea.classList.add("bg-light");
-  });
-
-  dropArea.addEventListener("dragleave", () => {
-      dropArea.classList.remove("bg-light");
-  });
-
-  // Handle file drop
-  dropArea.addEventListener("drop", (e) => {
-      e.preventDefault();
-      dropArea.classList.remove("bg-light");
-
-      if (e.dataTransfer.files.length > 0) {
-          fileInput.files = e.dataTransfer.files;
-          displayFileNames(Array.from(e.dataTransfer.files));
-      }
-  });
-
-  // Display selected file names
-  fileInput.addEventListener("change", (e) => {
-      if (e.target.files.length > 0) {
-          displayFileNames(Array.from(e.target.files));
-      }
-  });
-
-  function displayFileNames(files) {
-      fileList.innerHTML = files
-          .map((file, index) => `<span>${index + 1}. ${file.name} </span>`)
-          .join("");
-  }
-   document.getElementById('uploadMaterialForm').addEventListener('submit', function (event) {
-            event.preventDefault();
-            
-            const errMssg = document.getElementById('err_mssg');
-            errMssg.innerHTML = "";
-            
-            const fileInput = document.getElementById('fileInput');
-            const uploadCourseId = document.getElementById('upload_chap_course_id').value;
-                // ✅ For non-lab docs → file required
-                if (!fileInput.value || fileInput.files.length === 0) {
-                errMssg.textContent = "Please select at least one file to upload.";
-                return;
-                }
-            
-            
-            const formData = new FormData();
-                for (let i = 0; i < fileInput.files.length; i++) {
-                formData.append('file_upload', fileInput.files[i]);
-                }
-            
-            
-            const uploadButton = document.getElementById('uploadButton');
-            const uploadLoader = document.getElementById('uploadLoader');
-            
-            uploadButton.disabled = true;
-            uploadLoader.classList.remove('d-none');
-            
-            fetch('{{ route("upload_essl") }}', {
-                method: 'POST',
-                headers: {
-                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
-                },
-                body: formData
-            })
-                .then(async response => {
-                const contentType = response.headers.get("content-type");
-                if (contentType && contentType.includes("application/json")) {
-                    return response.json();
-                } else {
-                    const text = await response.text();
-                    throw new Error("Server returned non-JSON response:\n" + text);
-                }
-                })
-                .then(data => {
-                uploadLoader.classList.add('d-none');
-                uploadButton.disabled = false;
-                if (data.success) {
-                    toastr.success('Materials uploaded successfully!');
-                
-                    // Reset full form
-                    document.getElementById('uploadMaterialForm').reset();
-                
-                    // Reset select2/select3 dropdowns
-                    $('#document_type_id').val('').trigger('change');
-                    $('#course_chapter_id').val('').trigger('change');
-                    $('#languageSelect').val('javascript').trigger('change'); // default back
-                
-                    // Reset code editor
-                    $('#codeEditor').text('');
-                    $('#codeTitle').val('');
-                    $('#labCodeSection').addClass('d-none'); // hide Lab Code section
-                
-                    // Reset file input + file list
-                    $('#fileInput').val('');
-                    $('#fileList').empty();
-                    $('#err_mssg').text('');
-                
-                    // Hide modal
-                    $('#kt_modal_upload_chapter').modal('hide');
-                }
-                else {
-                    errMssg.textContent = data.message || "An error occurred while uploading files.";
-                }
-                })
-                .catch(error => {
-                uploadLoader.classList.add('d-none');
-                uploadButton.disabled = false;
-                console.error('Error:', error);
-                errMssg.textContent = "An error occurred while uploading files.";
-                });
-        });
-</script>
-<style>
-  #dropArea {
-      cursor: pointer;
-  }
-  #dropArea.bg-light {
-      background-color: #f8f9fa;
-  }
-  #fileList p {
-      margin: 0;
-      font-size: 0.8rem;
-  }
-</style>
 
     <script>
         let currentPage = 1;
@@ -3077,9 +2966,6 @@
 
     <!--Add - Attendance Type - Leave Start -->
     <script>
-
-       
-
         function attendance_type_func_add() {
             var attendance_type_add = document.getElementById("attendance_type_add").value;
 
@@ -3145,6 +3031,171 @@
         }
     </script>
     <!-- Add - Attendance Type - On Duty End -->
+    <script>
+        const dropArea = document.getElementById("dropArea");
+        const fileInput = document.getElementById("fileInput");
+        const fileList = document.getElementById("fileList");
+
+        const allowedExtensions = ["xls", "xlsx", "xlsm", "csv"];
+
+        // Highlight on drag
+        dropArea.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dropArea.classList.add("bg-light");
+        });
+
+        dropArea.addEventListener("dragleave", () => {
+            dropArea.classList.remove("bg-light");
+        });
+
+        // Handle drop
+        dropArea.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropArea.classList.remove("bg-light");
+
+            const droppedFiles = Array.from(e.dataTransfer.files);
+            const validFiles = droppedFiles.filter(isValidExcelFile);
+
+            if (validFiles.length !== droppedFiles.length) {
+                $('#err_mssg').text("Only Excel files (.xls, .xlsx, .xlsm, .csv) are allowed.")
+            }else{
+                $('#err_mssg').text("")
+            }
+
+            if (validFiles.length > 0) {
+                fileInput.files = createFileList(validFiles);
+                displayFileNames(validFiles);
+                $('#err_mssg').text("")
+            }
+        });
+
+        // Handle manual file selection
+        fileInput.addEventListener("change", (e) => {
+            const selectedFiles = Array.from(e.target.files);
+            const validFiles = selectedFiles.filter(isValidExcelFile);
+
+            if (validFiles.length !== selectedFiles.length) {
+                $('#err_mssg').text("Only Excel files (.xls, .xlsx, .xlsm, .csv) are allowed.")
+                fileInput.value = ""; // reset invalid file
+                return;
+            }else{
+                $('#err_mssg').text("")
+            }
+
+            displayFileNames(validFiles);
+        });
+
+        // Validate file type
+        function isValidExcelFile(file) {
+            const ext = file.name.split(".").pop().toLowerCase();
+            return allowedExtensions.includes(ext);
+        }
+
+        // Display file names
+        function displayFileNames(files) {
+            fileList.innerHTML = files
+                .map((file, index) => `<span>${index + 1}. ${file.name}</span>`)
+                .join("");
+        }
+
+        // Create a new FileList object (needed when filtering dropped files)
+        function createFileList(files) {
+            const dataTransfer = new DataTransfer();
+            files.forEach(file => dataTransfer.items.add(file));
+            return dataTransfer.files;
+        }
+    </script>
+    <style>
+        #dropArea {
+            cursor: pointer;
+        }
+        #dropArea.bg-light {
+            background-color: #f8f9fa;
+        }
+        #fileList p {
+            margin: 0;
+            font-size: 0.8rem;
+        }
+    </style>
+    <script>
+
+        document.getElementById('uploadMaterialForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            
+            const errMssg = document.getElementById('err_mssg');
+            errMssg.innerHTML = "";
+            
+            
+            
+            const fileInput = document.getElementById('fileInput');
+            const uploadCourseId = document.getElementById('upload_chap_course_id').value;
+            
+            
+            
+                // ✅ For non-lab docs → file required
+                if (!fileInput.value || fileInput.files.length === 0) {
+                errMssg.textContent = "Please select at least one file to upload.";
+                return;
+                }
+            
+            
+            const formData = new FormData();
+                for (let i = 0; i < fileInput.files.length; i++) {
+                formData.append('file_upload', fileInput.files[i]);
+                }
+            
+            
+            const uploadButton = document.getElementById('uploadButton');
+            const uploadLoader = document.getElementById('uploadLoader');
+            
+            uploadButton.disabled = true;
+            uploadLoader.classList.remove('d-none');
+            
+            fetch('{{ route("upload_essl") }}', {
+                method: 'POST',
+                headers: {
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                },
+                body: formData
+            })
+                .then(async response => {
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    return response.json();
+                } else {
+                    const text = await response.text();
+                    throw new Error("Server returned non-JSON response:\n" + text);
+                }
+                })
+                .then(data => {
+                uploadLoader.classList.add('d-none');
+                uploadButton.disabled = false;
+                if (data.success) {
+                    toastr.success('File uploaded successfully!');
+                
+                    // Reset full form
+                    document.getElementById('uploadMaterialForm').reset();
+                    // Reset file input + file list
+                    $('#fileInput').val('');
+                    $('#fileList').empty();
+                    $('#err_mssg').text('');
+                
+                    // Hide modal
+                    $('#kt_modal_upload_essl').modal('hide');
+                }
+                else {
+                    errMssg.textContent = data.message || "An error occurred while uploading files.";
+                }
+                })
+                .catch(error => {
+                uploadLoader.classList.add('d-none');
+                uploadButton.disabled = false;
+                console.error('Error:', error);
+                errMssg.textContent = "An error occurred while uploading files.";
+                });
+        });
+
+    </script>
 
     <script>
         $(".list_page").DataTable({
@@ -3261,8 +3312,6 @@
     </style>
 
 <script>
-
-
         // Display Toastr messages
             @if (Session::has('toastr'))
                 var type = "{{ Session::get('toastr')['type'] }}";
@@ -3474,13 +3523,13 @@
     startTime.style.display = 'none';
     endTime.style.display = 'none';
 
-    if(entryValue === 'present') {
+    if(entryValue === '1') {
         // Nothing visible
     }
-    else if(['absent','leave','workoff'].includes(entryValue)) {
+    else if(['2','5','6'].includes(entryValue)) {
         reason.style.display = 'block';
     }
-    else if(['on_duty','permission'].includes(entryValue)) {
+    else if(['3','4'].includes(entryValue)) {
         reason.style.display = 'block';
         startTime.style.display = 'block';
         endTime.style.display = 'block';
@@ -3526,13 +3575,19 @@
                         }
                     });
                 }
+
+                if(countryId == 'egc'){
+                    loadAttendance(currentPage);
+                }
             });
 
             // depart list
             $('#entity_fill').on('change', function() {
                 var entity_id = $(this).val();
                 var stateDropdown = $('#department_fill');
-
+                if(entity_id ){
+                    loadAttendance(currentPage);
+                }
                 // stateDropdown.empty().append('<option value="">Select Department</option>');
 
                 // if (entity_id) {
@@ -3768,6 +3823,7 @@
 </script>
 
 <script>
+    let auth_user_id =@json($user_id);
     // LOAD LIST
     function loadAttendance(page = 1) {
         const perpage = document.getElementById('perpage').value;
@@ -3795,11 +3851,16 @@
         .then(res => {
 
             renderAttendanceRows(res.data);        // only rows (center dates are created separately)
+            $('#total_present_company').text(`${res.totalPresentPercentage || '00'}%`)
+            $('#total_absent_company').text(`${res.totalAbsentPercentage || '00'}%`)
+            $('#total_leave_company').text(`${res.totalLeavePercentage || '00'}%`)
+            $('#total_pr_company').text(`${res.totalPRMPercentage || '00'}%`)
+            $('#total_od_company').text(`${res.totalODPercentage || '00'}%`)
 
             updatePagination(res.current_page, res.last_page, res.total, perpage);
 
             // re-generate date columns after table loads
-            renderMonth(currentDate);
+            // renderMonth(currentDate);
 
             isLoading = false;
         })
@@ -3869,7 +3930,7 @@
                                 <div>
                                     <span class="badge bg-dark text-white fs-8"
                                         data-bs-toggle="tooltip" title="Overall Percentage">
-                                        ${row.overall_percentage ?? '0'}%
+                                        ${CalculatePercentage(row.dayCount,row.totalPresent) ?? '0'}%
                                     </span>
                                 </div>
                             </div>
@@ -3881,13 +3942,15 @@
                     <!-- ACTIONS -->
                     <td class="text-center">
                         <span class="d-flex gap-1 justify-content-center">
-                            <a href="javascript:;" data-bs-toggle="modal" 
-                            data-bs-target="#kt_modal_view_attendance">
+                        ${auth_user_id ==0 ?
+
+                            `<a href="javascript:;" data-bs-toggle="modal" 
+                            data-bs-target="#kt_modal_view_attendance" onclick="viewmodel(${row.staff_id})">
                                 <i class="mdi mdi-eye fs-3 text-black"></i>
-                            </a>
+                            </a>` : ''}
 
                             <a href="javascript:;" data-bs-toggle="modal" 
-                            data-bs-target="#kt_modal_edit">
+                            data-bs-target="#kt_modal_edit" onclick="update_attendance_func(${row.staff_id})">
                                 <i class="mdi mdi-square-edit-outline fs-3 text-black"></i>
                             </a>
                         </span>
@@ -5102,6 +5165,223 @@
             }
         });
     }
+
+    function CalculatePercentage(total,actual){
+        var percent =(actual*100)/total;
+            percent = percent > 100 ? 100 :percent;
+            percent =percent < 0 ? 0 : percent;
+        return percent;
+    }
+
+</script>
+
+<script>
+    function update_attendance_func(id){
+         $('#update_staff_id').val(id);
+        $.ajax({
+            url: "{{ route('get_staff_by_id') }}",
+            type: "GET",
+            data: {
+                staff_id: id
+            },
+            success: function(response) {
+                if (response.status === 200 && response.data) {
+                    var data =response.data;
+                    var company_name = data.company_type ==1 ? 'Elysium Groups Of Companies' : data.company_name;
+                    var entity_name = data.company_type ==1 ? 'Elysium Groups Of Companies' : data.entity_name;
+
+                    let staff_image = '';
+                    if (data.staff_image && data.staff_image.trim() !== '') {
+                        if (data.company_type == 1) {
+                            staff_image = `staff_images/Management/${data.staff_image}`;
+                        } else {
+                            staff_image = `staff_images/Buisness/${data.company_id}/${data.entity_id}/${data.staff_image}`;
+                        }
+                    } else {
+                        staff_image = data.gender == 1
+                            ? 'assets/egc_images/auth/user_2.png'
+                            : 'assets/egc_images/auth/user_7.png';
+                    }
+                    staff_image = `{{ asset('${staff_image}') }}`;
+                    $('#update_staff_image').attr('src',staff_image);
+                    $('#update_staff_name').text(data.staff_name || '-');
+                    $('#update_staff_company').text(company_name || '-');
+                    $('#update_staff_entity').text(entity_name || '-');
+                    $('#update_staff_department').text(data.department_name || '-');
+                    dateChangeUpdate()
+                }
+            },
+            error: function(error) {
+                console.error('Error fetching states:', error);
+            }
+        });
+
+    }
+
+    function dateChangeUpdate() {
+        var date = $('#attendance_date_edit').val();
+        var staff_id = $('#update_staff_id').val();
+        if (date) {
+            $.ajax({
+                url: "{{ route('get_staff_attendance_by_date') }}",
+                type: "GET",
+                data: {
+                    date: date,
+                    staff_id: staff_id,
+                },
+                success: function(response) {
+                    if (response.status === 200 && response.data) {
+                        var data = response.data;
+
+                        // Check the attendance status and update the select field accordingly
+                        if (data.attendance) {
+                            if (data.attendance === 'P') {
+                                $('#entry_select_edit').val('1').change();
+                            } else if (data.attendance === 'A') {
+                                $('#entry_select_edit').val('2').change();
+                            } else if (data.attendance === 'L') {
+                                $('#entry_select_edit').val('5').change();
+                            } else if (data.attendance === 'PR') {
+                                $('#entry_select_edit').val('4').change();
+                            } else if (data.attendance === 'OD') {
+                                $('#entry_select_edit').val('3').change();
+                            } 
+                            $('#update_st_time').val(data.time_start)
+                            $('#update_end_time').val(data.time_end)
+                            $('#reason_edit').val(data.reason)
+                        }
+                    }else{
+                        if (response.wkoff) {  // For Weekly Off
+                            // $('#entry_select_edit').val('workoff').change();
+                        }
+                    }
+                },
+                error: function(error) {
+                    console.error('Error fetching attendance data:', error);
+                }
+            });
+        } 
+    }
+    function updateAttendanceFunc(){
+        const form = document.getElementById("updateAttendanceForm");
+        const submitBtn = document.getElementById("submitStaffBtn");
+        const submitBtnText = document.getElementById("yesBtnText");
+        const submitBtnLoader = document.getElementById("yesBtnLoader");
+         const staff_id =$('#update_staff_id').val();
+        if (form) {
+            // Disable the button to prevent duplicate submission
+            submitBtn.disabled = true;
+            submitBtnText.style.display = "none"; // Hide "Yes"
+            submitBtnLoader.style.display = "inline-block"; // Show loader
+            // ✅ Create FormData manually
+            const formData = new FormData(form);
+
+
+            // ✅ Send via AJAX (so files are sent correctly)
+            $.ajax({
+                url: '/update_staff_attendance',
+                method: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    // console.log("Success:", response);
+                    window.location.href = '/hr_enroll/manage_attendance';
+                },
+                error: function(err) {
+                    console.error("Error:", err);
+                    // In case of an error, re-enable the button and reset the text
+                    submitBtn.disabled = false;
+                    submitBtnText.style.display = "inline-block"; // Show "Yes" again
+                    submitBtnLoader.style.display = "none"; // Hide loader
+                }
+            });
+        }
+    
+    }
+
+    function viewmodel(id) {
+
+        document.querySelectorAll('.skeleton-loader-view').forEach(s => s.style.display = 'block');
+        document.querySelectorAll('.view-data').forEach(e => e.style.display = 'none');
+
+        const month = currentDate.getMonth() + 1;
+        const year = currentDate.getFullYear();
+        const formattedMonth = new Date(year, month - 1).toLocaleString('en-us', { month: 'short' }).toUpperCase();
+        const monthFilter = `${formattedMonth}-${year}`;
+
+        let url = `/get_month_staff_attendance_by_id?staff_id=${id}&month_filter=${monthFilter}`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(res => {
+                if (res.status === 200) {
+
+                    let data = res.staff;
+
+                    document.querySelectorAll('.skeleton-loader-view').forEach(s => s.style.display = 'none');
+                    document.querySelectorAll('.view-data').forEach(e => e.style.display = 'block');
+
+                    // ----- Correct staff image -----
+                    let staff_image = "";
+
+                    if (data.staff_image) {
+                        if (data.company_type == 1)
+                            staff_image = `/staff_images/Management/${data.staff_image}`;
+                        else
+                            staff_image = `/staff_images/Buisness/${data.company_id}/${data.entity_id}/${data.staff_image}`;
+                    } else {
+                        staff_image = data.gender == 1
+                            ? '/assets/egc_images/auth/user_2.png'
+                            : '/assets/egc_images/auth/user_7.png';
+                    }
+
+                    document.getElementById('view_staff_image').src = staff_image;
+                    document.getElementById('view_staff_profile_image').src = staff_image;
+                    var company_name = data.company_type == 1? 'Elysium Groups Of Companies':data.company_name;
+                    // You must populate other staff info here...
+                    $('#view_department').html(data.department_name);
+                    $('#view_staff_name').html(data.staff_name);
+                    $('#view_mobile_no').html(data.mobile_no);
+                    $('#view_branchName').html(company_name);
+                    $('#view_overallPercentage').html(data.overAllPercentage ? data.overAllPercentage + '%' : '0%');
+
+                    // Load attendance table
+                    loadAttendanceView(res.attendance);
+
+                } else {
+                    console.error(res.error_msg);
+                }
+            });
+    }
+
+    function loadAttendanceView(list) {
+
+    let html = "";
+
+    if (list.length === 0) {
+        html += `<tr><td colspan="4" class="text-center text-danger">No attendance found</td></tr>`;
+    } else {
+        list.forEach(a => {
+            html += `
+                <tr>
+                    <td>
+                        <label class="fw-semibold">${a.date}</label>
+                        <div><label class="text-warning">${a.day}</label></div>
+                    </td>
+                    <td>${a.attendance ?? '-'}</td>
+                    <td>
+                        ${a.time_start ? `${a.time_start} to ${a.time_end}` : '-'}
+                    </td>
+                    <td><label class="text-danger">${a.reason || '-'}</label></td>
+                </tr>
+            `;
+        });
+    }
+
+    document.getElementById("list-view-attendance-month").innerHTML = html;
+}
+
 
 </script>
 @endsection
