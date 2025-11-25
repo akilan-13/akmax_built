@@ -406,11 +406,11 @@ public function index(Request $request)
         return response()->json([
             'data' => $data,
             'totalPresentCount' => $totalPresentCount,
-            'totalPresentPercentage' => $totalPresentPercentage,
-            'totalODPercentage' => $totalODPercentage,
-            'totalLeavePercentage' => $totalLeavePercentage,
-            'totalAbsentPercentage' => $totalAbsentPercentage,
-            'totalPRMPercentage' => $totalPRMPercentage,
+            'totalPresentPercentage' => round($totalPresentPercentage,1),
+            'totalODPercentage' => round($totalODPercentage,1),
+            'totalLeavePercentage' => round($totalLeavePercentage,1),
+            'totalAbsentPercentage' => round($totalAbsentPercentage,1),
+            'totalPRMPercentage' => round($totalPRMPercentage,1),
             'dates' => array_map(fn($d)=>$d->format('Y-m-d'), $dates),
             'current_page' => $staffs->currentPage(),
             'last_page' => $staffs->lastPage(),
@@ -594,7 +594,7 @@ private function processAttendanceForDate(Request $request, array $staffIds, str
         $staff_attendance_id = $this->generateStaffAttendanceId($category_check, $year,$month);
         
         // Save attendance
-        StaffAttendanceModel::create([
+       $addStaff = StaffAttendanceModel::create([
             'staff_attendance_id' => $staff_attendance_id,
             'branch_id'           => $branchId,
             'staff_id'            => $staffId,
@@ -607,6 +607,27 @@ private function processAttendanceForDate(Request $request, array $staffIds, str
             'created_by'          => $userId,
             'updated_by'          => $userId,
         ]);
+
+        if($addStaff){
+            $staffData = StaffModel::where('sno', $staffId)
+            ->first();
+            if($staffData->company_type == 2){
+                $payload=[
+                    'sno' => $addStaff->sno,
+                    'staff_id' => $addStaff->staff_id,
+                    'entity_id' => $add_staff->entity_id,
+                    'date' => $addStaff->date ?? null,
+                    'attendance' => $addStaff->attendance ?? null,
+                    'type' => $addStaff->type ?? null,
+                    'time_start'    => $addStaff->time_start ?? null,
+                    'time_end' => $addStaff->time_end ?? null,
+                    'reason' =>  $addStaff->reason ?? null,
+                    
+                ];
+                $this->dispatchUpdateWebhooks($payload, 1,'Attendance_Add_Hook');
+            }
+            
+        }
 
         
     }
@@ -914,13 +935,32 @@ private function processAttendance(Request $request, $staffId, $attendanceType, 
         $alreadyExists->time_end = $endTime ?? null;
         $alreadyExists->reason = $reason ?? null;
         $alreadyExists->update();
+        if($alreadyExists){
+            $staffData = StaffModel::where('sno', $alreadyExists->staff_id)
+            ->first();
+            if($staffData->company_type == 2){
+                $payload=[
+                    'sno' => $alreadyExists->sno,
+                    'staff_id' => $alreadyExists->staff_id,
+                    'entity_id' => $add_staff->entity_id,
+                    'date' => $alreadyExists->date ?? null,
+                    'attendance' => $alreadyExists->attendance ?? null,
+                    'type' => $alreadyExists->type ?? null,
+                    'time_start'    => $alreadyExists->time_start ?? null,
+                    'time_end' => $alreadyExists->time_end ?? null,
+                    'reason' =>  $alreadyExists->reason ?? null,
+                    
+                ];
+                $this->dispatchUpdateWebhooks($payload, 1,'Attendance_Add_Hook');
+            }
+        }
     } else {
         // Generate a new staff attendance ID
         $category_check = StaffAttendanceModel::where('status', '!=', 2)->orderBy('sno', 'desc')->first();
         $staff_attendance_id = $this->generateStaffAttendanceId($category_check, $year, $month);
 
         // Save new attendance record
-        StaffAttendanceModel::create([
+       $addStaff= StaffAttendanceModel::create([
             'staff_attendance_id' => $staff_attendance_id,
             'branch_id'           => $branchId,
             'staff_id'            => $staffId,
@@ -933,6 +973,25 @@ private function processAttendance(Request $request, $staffId, $attendanceType, 
             'created_by'          => $userId,
             'updated_by'          => $userId,
         ]);
+        if($addStaff){
+            $staffData = StaffModel::where('sno', $staffId)
+            ->first();
+            if($staffData->company_type == 2){
+                $payload=[
+                    'sno' => $addStaff->sno,
+                    'staff_id' => $addStaff->staff_id,
+                    'entity_id' => $add_staff->entity_id,
+                    'date' => $addStaff->date ?? null,
+                    'attendance' => $addStaff->attendance ?? null,
+                    'type' => $addStaff->type ?? null,
+                    'time_start'    => $addStaff->time_start ?? null,
+                    'time_end' => $addStaff->time_end ?? null,
+                    'reason' =>  $addStaff->reason ?? null,
+                    
+                ];
+                $this->dispatchUpdateWebhooks($payload, 1,'Attendance_Add_Hook');
+            }
+        }
     }
 
     // Return the staff ID
@@ -943,7 +1002,7 @@ public function getMonthStaffAttendanceById(Request $request)
 {
     $staff_id = $request->staff_id;
 
-    $staff = StaffModel::select(
+        $staff = StaffModel::select(
             'egc_staff.*',
             'egc_entity.entity_name',
             'egc_entity.entity_short_name',
@@ -960,7 +1019,7 @@ public function getMonthStaffAttendanceById(Request $request)
         ->join('egc_job_role', 'egc_staff.job_role_id', 'egc_job_role.sno')
         ->where('egc_staff.sno', $staff_id)
         ->first();
-        
+      
         $month_filter = $request->get('month_filter', date('M-Y'));
         $parsedDate = Carbon::createFromFormat('M-Y', $month_filter);
 
@@ -980,7 +1039,7 @@ public function getMonthStaffAttendanceById(Request $request)
             ->filter(fn($d) => $d->dayOfWeek !== Carbon::SUNDAY)
             ->count();
 
-    $attendanceRecords = StaffAttendanceModel::select(
+        $attendanceRecords = StaffAttendanceModel::select(
             'egc_staff_attendance.staff_id',
             'egc_staff_attendance.date',
             'egc_staff_attendance.attendance',
@@ -991,16 +1050,29 @@ public function getMonthStaffAttendanceById(Request $request)
         ->where('egc_staff_attendance.staff_id', $staff_id)
         ->whereYear('egc_staff_attendance.date', $year)
         ->whereMonth('egc_staff_attendance.date', $month)
-        ->orderBy('egc_staff_attendance.date', 'asc')
+        ->orderBy('egc_staff_attendance.date', 'desc')
         ->get();
-        $totalPresentCount = $attendanceRecords->flatMap(function($records) {
-            return $records->whereIn('attendance', ['P','PR','HD']); // Filter out other attendance types
-        })->count();
+ 
+         $totalPresentCount = StaffAttendanceModel::select('egc_staff_attendance.sno')
+        ->where('egc_staff_attendance.staff_id', $staff_id)
+        ->whereYear('egc_staff_attendance.date', $year)
+        ->whereMonth('egc_staff_attendance.date', $month)
+        ->whereIn('egc_staff_attendance.attendance', ['P','PR','HD'])
+        ->orderBy('egc_staff_attendance.date', 'asc')
+        ->count();
 
+        $overAllPercentage=0;
+  
        $overAllPercentage = $dayCount > 0 ? ($totalPresentCount / $dayCount )*100 : 0;
+      
        $overAllPercentage = $overAllPercentage >100 ? 100 :round($overAllPercentage,1);
+        
        $overAllPercentage = $overAllPercentage < 0 ? 0 :round($overAllPercentage,1);
-        $staff->overAllPercentage =$overAllPercentage;
+       
+
+    $staff->overAllPercentage = $overAllPercentage;
+    
+    
     $helper = new \App\Helpers\Helpers();
     $common_date_format = $helper->general_setting_data()->date_format ?? 'd-M-y';
 
@@ -1021,16 +1093,16 @@ public function getMonthStaffAttendanceById(Request $request)
 
 
 
- protected function dispatchUpdateWebhooks(StaffModel $broadcast, $userId = 1,$dispatchHook)
+ protected function dispatchUpdateWebhooks( $broadcast, $userId = 1,$dispatchHook)
   {
-      $webhook = SubErpWebhookModel::where('status', 0)->where('webhook_module',$dispatchHook)->where('entity_id',$broadcast->entity_id)->first();
+      $webhook = SubErpWebhookModel::where('status', 0)->where('webhook_module',$dispatchHook)->where('entity_id',$broadcast['entity_id'])->first();
           if($webhook){
               $dispatch = WebhookDispatchModel::create([
                 'sub_erp_webhook_sno' => $webhook->sno,
-                'dispatchable_type' => get_class($broadcast),
-                'dispatchable_id' => $broadcast->sno,
-                'message_uuid' => $broadcast->sno,
-                'payload' => $broadcast->toArray(),
+                'dispatchable_type' => 'App\Models\StaffAttendanceModel',
+                'dispatchable_id' => $broadcast['sno'],
+                'message_uuid' => $broadcast['sno'],
+                'payload' => json_encode($broadcast),
                 'status' => 0,
                 'attempts' => 0,
                 'created_by' => $userId,
