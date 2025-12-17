@@ -1,0 +1,1048 @@
+@extends('layouts/blankLayout')
+
+@section('title', 'EGC Job Interview')
+
+@section('vendor-style')
+@vite([
+'resources/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.scss',
+'resources/assets/vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.scss',
+'resources/assets/vendor/libs/select2/select2.scss',
+'resources/assets/vendor/libs/bootstrap-datepicker/bootstrap-datepicker.scss',
+'resources/assets/vendor/libs/bootstrap-daterangepicker/bootstrap-daterangepicker.scss',
+'resources/assets/vendor/libs/flatpickr/flatpickr.scss',
+'resources/assets/vendor/libs/dropzone/dropzone.scss',
+'resources/assets/vendor/libs/tagify/tagify.scss',
+])
+@endsection
+
+@section('vendor-script')
+@vite([
+'resources/assets/vendor/libs/select2/select2.js',
+'resources/assets/vendor/libs/bootstrap-datepicker/bootstrap-datepicker.js',
+'resources/assets/vendor/libs/bootstrap-daterangepicker/bootstrap-daterangepicker.js',
+'resources/assets/vendor/libs/flatpickr/flatpickr.js',
+'resources/assets/vendor/libs/dropzone/dropzone.js',
+])
+@endsection
+
+@section('page-script')
+@vite(['resources/assets/js/forms_date_time_pickers.js'])
+@endsection
+<style>
+    body {
+        background: #f7f7f7;
+        font-family: 'Roboto', sans-serif;
+    }
+
+    .permission-modal{
+        position:fixed; inset:0;
+        background:#000000cc;
+        display:flex; align-items:center; justify-content:center;
+        z-index:9999;
+    }
+
+    .permission-check-box{
+        background:#fff; padding:30px; border-radius:12px;
+        max-width:400px; text-align:center;
+    }
+    .permission-box{
+        background:#fff; padding:30px; border-radius:12px;
+        max-width:400px; text-align:center;
+    }
+
+    .try-again{
+        cursor:pointer;
+    }
+    .try-again:hover{
+        text-decoration:underline;
+    }
+
+    /* Page Wrapper */
+    .interview-page {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+
+    /* Question Section (NO CARD) */
+    .question-section {
+        margin-bottom: 1rem;
+    }
+
+    .question-count {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #666;
+    }
+
+    .question-text {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0.5rem 0;
+    }
+
+    .question-meta {
+        font-size: 0.8rem;
+        color: #888;
+    }
+
+    /* ✅ Answer Card ONLY */
+    .answer-card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 0.5rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    .thinking_time_container {
+        position: absolute;
+        inset: 0;
+        background: #000;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+    }
+
+    /* Center content */
+    .thinking_time {
+        position: relative;
+        width: 120px;
+        height: 120px;
+    }
+
+    /* SVG Ring */
+    .progress-ring__circle {
+        stroke-dasharray: 327;
+        stroke-dashoffset: 0;
+        transition: stroke-dashoffset 1s linear;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+    }
+
+    /* Text */
+    .thinking_time_text {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #fba919;
+        font-weight: 600;
+    }
+
+    .thinking_time_text small {
+        font-size: 0.75rem;
+        color: #aaa;
+    }
+
+    .thinking_time_text span {
+        font-size: 2rem;
+    }
+    #video_interview{
+        width: 100%;
+        min-height: 260px;
+    }
+
+    .answer-textarea {
+        width: 100%;
+        min-height: 260px;
+        border: none;
+        outline: none;
+        resize: none;
+        font-size: 0.95rem;
+    }
+
+    .char-count {
+        text-align: right;
+        font-size: 0.75rem;
+        color: #aaa;
+    }
+
+    /* Timer */
+    .remaining-time {
+        text-align: center;
+        margin: 0.8rem 0;
+        font-size: 0.85rem;
+        color: #555;
+    }
+
+    /* Button */
+    .btn-next {
+        width: 100%;
+    }
+
+
+    .interview-container{
+        padding:0 15px;
+    }
+    video { 
+        width: 100%; 
+        border-radius: 10px; 
+        min-height: 260px;
+        max-height: 480px;
+        background: #000; 
+    }
+    #audio_container{
+        width: 100%; 
+         min-height: 160px;
+    }
+    audio { 
+        width: 100%; 
+        border-radius: 10px; 
+        background: #000; 
+    }
+
+    #audioWaveform {
+        width: 100%;
+        height: 120px;
+        background: linear-gradient(180deg,#fafafa,#f1f1f1);
+        border-radius: 10px;
+    }
+
+    #audio_container audio {
+        background: transparent;
+    }
+
+   .spectrum {
+        display: flex;
+        align-items: flex-end;
+        height: 260px;
+        gap: 4px;
+        padding: 10px;
+        background: linear-gradient(180deg,#0b0b0b,#1a1a1a);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .spectrum-bar {
+        flex: 1;
+        height: 10%;
+        border-radius: 6px;
+        background: linear-gradient(
+            180deg,
+            #00e676 0%,
+            #ffea00 55%,
+            #ff3d00 100%
+        );
+        transition: height 0.06s linear;
+        box-shadow:
+            0 0 10px rgba(0,230,118,.6),
+            0 0 18px rgba(255,61,0,.4);
+    }
+
+
+    /* Desktop */
+    @media (min-width: 768px) {
+        .answer-textarea {
+            min-height: 320px;
+        }
+
+        .btn-next {
+            width: 100%;
+        }
+    }
+    .image-container {
+        position: relative;
+        display: inline-block;
+        overflow: hidden;
+    }
+    .app-header .logo-wrapper img {
+        max-width: 150px; /* Reduced logo size for mobile */
+        padding: 0 0 10px 0;
+    }
+    
+</style>
+@section('content')
+<div class="interview-page" id="interview_page" style="display:none;">
+    <div class="app-header w-full d-flex justify-content-start">
+            <div class="header-content" id="desktop_device">
+                <div class="logo-wrapper">
+                    <div class="image-container">
+                        <img src="{{ asset('assets/common/logo_full.png') }}" alt="Company Logo" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+    </div>
+    <div class="interview-container">
+        <!-- Question Info -->
+        <div class="question-section">
+            <span class="question-count">Question 1 of 3</span>
+
+            <p class="question-text">
+                1). Can you provide an example of a time when you had to learn a
+                new skill quickly to meet job requirements?
+            </p>
+
+            <p class="question-meta">
+                <span>No Description</span><br>
+                <span>Text Response</span> •
+                <span><span id="allow_time">60</span> seconds</span> •
+                <span><span id="retake_count">0</span> takes</span>
+            </p>
+        </div>
+
+        <!-- ✅ Answer Card ONLY -->
+        <div class="answer-card position-relative">
+            <div id="text_interview" style ="display:none;">
+                <textarea
+                    class="answer-textarea border rounded p-2"
+                    id="answerTextarea_1"
+                    placeholder="Type your answer here..."
+                    disabled
+                oninput=handleNextBtn(1,this.value)></textarea>
+                <div class="char-count">0/1000</div>
+            </div>
+            <div id="video_interview" style ="display:none;">
+                <video id="preview" autoplay muted></video>
+                <video id="recorded" controls class="d-none mt-3"></video>
+            </div>
+            <div id="audio_interview" style ="display:none;">
+                <div id="audio_container">
+                    <audio id="preview_audio" autoplay muted></audio>
+                    <div class="spectrum" id="spectrum">
+                        <!-- Bars will be injected by JS -->
+                    </div>
+                    <audio id="recorded_audio" controls class="d-none mt-3"></audio>
+                </div>
+
+            </div>
+            <div id="thinkingOverlay" class="thinking_time_container" style="">
+                <div class="thinking_time">
+                    <svg class="progress-ring" width="120" height="120">
+                        <circle
+                            class="progress-ring__background"
+                            stroke="#ffffffff"
+                            stroke-width="8"
+                            fill="transparent"
+                            r="52"
+                            cx="60"
+                            cy="60"
+                        />
+                        <circle
+                            class="progress-ring__circle"
+                            stroke="#fba919"
+                            stroke-width="8"
+                            fill="transparent"
+                            r="52"
+                            cx="60"
+                            cy="60"
+                        />
+                    </svg>
+
+                    <div class="thinking_time_text">
+                        <small>Starts in</small>
+                        <span id="thinkingTimer">25</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timer -->
+        <div class="remaining-time">
+            Remaining time <strong id="remaining_time">00:00</strong>
+        </div>
+
+        <!-- Button -->
+        <div class="button" >
+            <div class="" id ="record_start" style ="display:none;">
+                <button type="button" class="btn btn-light text-success btn-success me-2 recordStart w-100"><span class="mdi mdi-play"></span> Start Recording</button>
+            </div>
+            <div class="" id ="record_stop" style ="display:none;">
+                <button type="button" class="btn btn-light text-danger me-2 recordStop w-100"><span class="mdi mdi-stop"></span>Stop Recording</button>
+            </div>
+            
+            <div class="d-flex gap-1 " id="record_vid_audio" > 
+                <div class="w-100" id ="record_reset" style ="display:none;">
+                    <button type="button" class="btn btn-warning recordReset w-100"><span class="mdi mdi-refresh"></span>Retake</button>
+                </div>
+                <div class="w-100" id ="next_btn" style ="">
+                    <button type="button" class="btn btn-primary btn-next fw-bold" id="question_btn_1" onclick="startInterview()" >
+                        <div id="ans_submit_btn">Start</div> 
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+        <div class="bg-label-danger mt-2 resetInfo p-3" style ="display:none;">
+            This is your final retake. Take a breath and give it your best
+        </div>
+    </div>
+
+</div>
+<div id="permissionModal" class="permission-modal">
+<div class="permission-check-box">
+    <h4>Please Wait Checking the Permission</h4>
+    <span class="spinner-border text-primary"></span>
+</div>
+  <div class="permission-box" style="display:none;">
+    <h4>Camera & Microphone Access Required</h4>
+    <p>Please allow access to continue your interview.</p>
+    <span onclick="location.reload()" class="text-primary try-again">Try Again</span>
+  </div>
+</div>
+
+<script>
+    // config
+    const interviewType = 'audio';
+    const DEFAULT_THINKING_TIME = 5;
+    const QUICK_THINKING_TIME = 3;
+
+    const ANSWER_TIME = parseInt(
+        document.getElementById('allow_time')?.innerText || 60
+    );
+
+    const MAX_RETAKES = 1;
+    // state
+    let stream = null;
+    let recorder = null;
+    let chunks = [];
+    let remainingRetakes = MAX_RETAKES;
+    let autoSubmitTimer = null;
+    let isRecording = false;
+    let remainingSeconds = ANSWER_TIME;
+    let recordInterval = null;
+    let thinkingInterval = null;
+    let hasStarted = false;
+    let access_permision = false;
+    let isAutoStop = false;
+    let currentQuestionIndex = 0;
+    let totalQuestions = 3;
+    let audioCtx;
+    let analyser;
+    // let playbackSource;
+    let micSource = null;
+    let spectrumRAF;
+    let isSpectrumActive = false;
+    let spectrumBars = [];
+
+    // elements
+    const modal = document.getElementById('permissionModal');
+    const permissionCheck = document.querySelector('.permission-check-box');
+    const permissionDenied = document.querySelector('.permission-box');
+    const page = document.querySelector('.interview-page');
+    const overlay = document.getElementById('thinkingOverlay');
+    const thinkingText = document.getElementById('thinkingTimer');
+    const remaining = document.getElementById('remaining_time');
+    const stopBtn = document.getElementById('record_stop');
+    const nextBtn = document.getElementById('next_btn');
+    const resetBtn = document.getElementById('record_reset');
+    const textarea = document.getElementById('answerTextarea_1');
+    const video = document.getElementById('preview');
+    const audio = document.getElementById('preview_audio');
+
+    // check camera & audio Access
+
+    async function checkPermission() {
+        try {
+            const s = await navigator.mediaDevices.getUserMedia({
+                video: interviewType === 'video',
+                audio: interviewType !== 'text'
+            });
+            s.getTracks().forEach(t => t.stop());
+            access_permision= true;
+            return true;
+        } catch {
+            access_permision= false;
+            permissionCheck.style.display="none";
+            permissionDenied.style.display="block";
+            return false;
+        }
+    }
+
+    const circle = document.querySelector('.progress-ring__circle');
+    const radius = 52;
+    const circumference = 2 * Math.PI * radius;
+
+    circle.style.strokeDasharray = circumference;
+    circle.style.strokeDashoffset = circumference;
+
+    function setProgress(current, total) {
+        const offset = circumference - (current / total) * circumference;
+        circle.style.strokeDashoffset = offset;
+    }
+
+    function initAudioEngine() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)({
+                latencyHint: 'interactive'
+            });
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 512;
+        }
+
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+
+    function initSpectrum(barCount = 24) {
+        const container = document.getElementById('spectrum');
+        container.innerHTML = '';
+        spectrumBars = [];
+
+        for (let i = 0; i < barCount; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'spectrum-bar';
+            container.appendChild(bar);
+            spectrumBars.push(bar);
+        }
+    }
+
+    function connectMicToSpectrum(stream) {
+        initAudioEngine();
+
+        if (micSource) micSource.disconnect();
+        micSource = audioCtx.createMediaStreamSource(stream);
+        micSource.connect(analyser);
+
+        startSpectrum();
+    }
+
+
+
+    function connectPlaybackToSpectrum(audioEl) {
+        initAudioEngine();
+
+        const source = audioCtx.createMediaElementSource(audioEl);
+        source.connect(analyser);
+        analyser.connect(audioCtx.destination);
+
+        audioEl._mediaSource = source; // optional reference
+    }
+
+
+
+
+
+    function startSpectrum() {
+        if (isSpectrumActive) return;
+        isSpectrumActive = true;
+
+        const data = new Uint8Array(analyser.frequencyBinCount);
+
+        function draw() {
+            if (!isSpectrumActive) return;
+
+            analyser.getByteFrequencyData(data);
+            const step = Math.floor(data.length / spectrumBars.length);
+
+            spectrumBars.forEach((bar, i) => {
+                const v = data[i * step] / 255;
+                bar.style.height = `${Math.max(v * 100, 6)}%`;
+            });
+
+            spectrumRAF = requestAnimationFrame(draw);
+        }
+        draw();
+    }
+
+    function stopSpectrum() {
+        isSpectrumActive = false;
+        cancelAnimationFrame(spectrumRAF);
+
+        spectrumBars.forEach(bar => {
+            bar.style.height = '6%';
+        });
+    }
+
+
+
+    // start Thinking Time
+    function startThinking(seconds = DEFAULT_THINKING_TIME) {
+        console.log("interview Start")
+        clearInterval(thinkingInterval);
+
+        let t = seconds;
+        overlay.style.display = 'flex';
+        thinkingText.textContent = t;
+        setProgress(t, seconds);
+
+        thinkingInterval = setInterval(() => {
+            t--;
+            thinkingText.textContent = t;
+            setProgress(t, seconds);
+
+            if (t <= 0) {
+                clearInterval(thinkingInterval);
+                overlay.style.display = 'none';
+                startAnswer();
+            }
+        }, 1000);
+    }
+
+
+
+    // start Answer Time
+    function startAnswer() {
+         $(`#ans_submit_btn`).text('Save & Next');
+        if (interviewType === 'text') {
+            textarea.disabled = false;
+            textarea.focus();
+            startTextTimer();
+        } else {
+            startRecording();
+        }
+    }
+
+    function startTextTimer() {
+        let t = ANSWER_TIME;
+        const i = setInterval(() => {
+            remaining.textContent = `00:${String(t).padStart(2,'0')}`;
+            if (--t < 0) {
+                clearInterval(i);
+                submit();
+                 console.log("startTextTimer")
+            }
+        }, 1000);
+    }
+
+    function startInterview() {
+        if (!hasStarted) {
+            hasStarted = true;
+
+            // quick thinking instead of full
+            startThinking(QUICK_THINKING_TIME);
+            $(`#ans_submit_btn`).text('Save & Next');
+            return;
+        }
+
+        if($(`#ans_submit_btn`).text()=='Save & Next'){
+            submit();
+            console.log("startintervire")
+        }
+
+    }
+
+    function getSupportedMimeType() {
+        const types = [
+            'video/webm;codecs=vp9,opus',
+            'video/webm;codecs=vp8,opus',
+            'video/webm',
+            'audio/webm;codecs=opus',
+            'audio/webm'
+        ];
+        return types.find(t => MediaRecorder.isTypeSupported(t)) || '';
+    }
+
+
+    // start Auto Record
+    async function startRecording() {
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: interviewType === 'video',
+            // audio: {
+            //     echoCancellation: false,
+            //     noiseSuppression: false,
+            //     autoGainControl: false,
+            //     channelCount: 1
+            // }
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+                channelCount: 1,
+                sampleRate: 44100
+            }
+        });
+
+        /* LIVE PREVIEW */
+        if (interviewType === 'video') {
+            video.srcObject = stream;
+            video.muted = true;
+            video.playsInline = true;
+            video.classList.remove('d-none');
+            video.play();
+        } else {
+           audio.srcObject = stream;
+            audio.muted = true;
+            await audio.play();
+
+            connectMicToSpectrum(stream);
+
+            
+        }
+
+        
+
+        chunks = [];
+        // recorder = new MediaRecorder(stream);
+        recorder = new MediaRecorder(stream, {
+            mimeType: getSupportedMimeType(),
+            audioBitsPerSecond: 128000,
+            videoBitsPerSecond: 2500000
+        });
+
+
+        recorder.ondataavailable = e => chunks.push(e.data);
+        recorder.onstop = handleStop;
+
+        recorder.start();
+        startRecordTimer();
+
+
+        document.getElementById('record_stop').style.display = 'block';
+        document.getElementById('next_btn').style.display = 'none';
+    }
+
+
+
+    
+
+    function startRecordTimer() {
+        clearInterval(recordInterval);
+        remainingSeconds = ANSWER_TIME;
+
+        recordInterval = setInterval(() => {
+            remaining.textContent = `00:${String(remainingSeconds).padStart(2, '0')}`;
+
+            remainingSeconds--;
+
+            if (remainingSeconds < 0) {
+                clearInterval(recordInterval);
+                isAutoStop = true; //  AUTO STOP
+                if (recorder && recorder.state === 'recording') {
+                    recorder.stop();
+                }
+            }
+        }, 1000);
+    }
+
+
+    stopBtn.onclick = () => {
+        if (recorder && recorder.state === 'recording') {
+            clearInterval(recordInterval);
+            isAutoStop = false; // 🟢 MANUAL STOP
+            recorder.stop();
+        }
+    };
+
+
+    function handleStop() {
+        clearInterval(recordInterval);
+
+        const blob = new Blob(chunks, { type: recorder.mimeType });
+        const url = URL.createObjectURL(blob);
+
+        stream.getTracks().forEach(t => t.stop());
+
+        remaining.textContent =
+            `00:${String(Math.max(remainingSeconds, 0)).padStart(2, '0')}`;
+
+        if (interviewType === 'video') {
+            video.classList.add('d-none');
+            const recorded = document.getElementById('recorded');
+            video.srcObject = null;
+            recorded.src = url;
+            recorded.controls = true;
+            recorded.classList.remove('d-none');
+        }
+        if (interviewType === 'audio') {
+            audio.srcObject = null;
+            stopSpectrum();
+
+           const oldAudio = document.getElementById('recorded_audio');
+            if (oldAudio) {
+                oldAudio.pause();
+                if (oldAudio.src) URL.revokeObjectURL(oldAudio.src);
+                oldAudio.remove();
+            }
+
+
+            // Create a BRAND NEW audio element
+            const recordedAudio = document.createElement('audio');
+            recordedAudio.id = 'recorded_audio';
+            recordedAudio.controls = true;
+            recordedAudio.className = 'mt-3';
+            recordedAudio.src = url;
+
+            // Append it
+            document.getElementById('audio_container').appendChild(recordedAudio);
+
+            // Connect spectrum safely
+            connectPlaybackToSpectrum(recordedAudio);
+
+            recordedAudio.onplay = async () => {
+                await audioCtx.resume();
+                startSpectrum();
+            };
+
+            recordedAudio.onpause =
+            recordedAudio.onended = () => stopSpectrum();
+        }
+
+
+
+        
+        $(`#ans_submit_btn`).text('Start');
+        document.getElementById('record_stop').style.display = 'none';
+        document.getElementById('next_btn').style.display = 'block';
+
+        if (remainingRetakes > 0) {
+            resetBtn.style.display = 'block';
+        }
+        updateRetakeUI();
+
+
+
+        if (isAutoStop) {
+            console.log("stop record")
+            submit(); // only when time ends
+        }
+        
+        // setTimeout(submit, 1000);
+    }
+
+    function cleanupMedia() {
+    stopSpectrum();
+
+    // 🔥 STOP MIC STREAM
+    if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+    }
+
+    // 🔥 HARD RESET preview audio
+    if (audio) {
+        audio.pause();
+        audio.srcObject = null;
+        audio.muted = true;
+    }
+
+    // Disconnect mic analyser
+    if (micSource) {
+        micSource.disconnect();
+        micSource = null;
+    }
+
+    // ❌ REMOVE playbackSource usage completely
+    // playbackSource = null;
+
+    // 🔥 REMOVE recorded audio safely
+    const oldAudio = document.getElementById('recorded_audio');
+    if (oldAudio) {
+        oldAudio.pause();
+        if (oldAudio.src) URL.revokeObjectURL(oldAudio.src);
+        oldAudio.remove();
+    }
+}
+
+
+
+
+    // retake
+    // resetBtn.onclick = () => {
+    //     cleanupMedia()
+    //     if (remainingRetakes <= 0) return;
+
+    //     remainingRetakes--;
+    //     updateRetakeUI();
+
+    //     // Reset UI
+    //     clearInterval(recordInterval);
+    //     remaining.textContent = `00:${ANSWER_TIME}`;
+
+    //     document.getElementById('recorded').classList.add('d-none');
+    //     resetBtn.style.display = 'none';
+
+    //     hasStarted = false;
+    //     chunks = [];
+
+    //     startThinking(DEFAULT_THINKING_TIME);
+    // };
+
+    resetBtn.onclick = () => {
+        if (remainingRetakes <= 0) return;
+
+        cleanupMedia();
+
+        remainingRetakes--;
+        updateRetakeUI();
+
+        clearInterval(recordInterval);
+        remaining.textContent = `00:${ANSWER_TIME}`;
+
+        hasStarted = false;
+        chunks = [];
+        isAutoStop = false;
+
+        resetBtn.style.display = 'none';
+
+        startThinking(DEFAULT_THINKING_TIME);
+    };
+
+
+    function updateRetakeUI() {
+        document.getElementById('retake_count').innerText = remainingRetakes;
+
+        if (remainingRetakes <= 0) {
+            resetBtn.style.display = 'none';
+            document.querySelector('.resetInfo').style.display = 'block';
+        }
+    }
+
+
+
+    // submit answer
+    function submit() {
+        console.log('ANSWER SAVED FOR QUESTION', currentQuestionIndex + 1);
+
+        // 🔐 send answer to backend here (AJAX / fetch)
+
+        if (currentQuestionIndex < totalQuestions - 1) {
+            loadNextQuestion();
+        } else {
+            finalizeInterview();
+        }
+    }
+
+    // function submit() {
+    //     const formData = new FormData();
+
+    //     formData.append('question_id', currentQuestionIndex);
+    //     formData.append('type', interviewType);
+
+    //     if (interviewType === 'text') {
+    //         formData.append('answer', textarea.value);
+    //     } else {
+    //         const blob = new Blob(chunks, { type: recorder.mimeType });
+    //         formData.append('answer', blob);
+    //     }
+
+    //     fetch('/interview/save-answer', {
+    //         method: 'POST',
+    //         body: formData,
+    //         headers: {
+    //             'X-CSRF-TOKEN': '{{ csrf_token() }}'
+    //         }
+    //     }).then(() => {
+    //         if (currentQuestionIndex < totalQuestions - 1) {
+    //             loadNextQuestion();
+    //         } else {
+    //             finalizeInterview();
+    //         }
+    //     });
+    // }
+
+
+    function loadNextQuestion() {
+        cleanupMedia()
+        currentQuestionIndex++;
+
+        console.log('LOADING QUESTION', currentQuestionIndex + 1);
+
+        // 🔁 RESET UI
+        resetQuestionUI();
+
+        // 🔽 FETCH NEXT QUESTION FROM BACKEND
+        // fetch(`/interview/question/${currentQuestionIndex}`)
+    }
+
+    function finalizeInterview() {
+        cleanupMedia()
+        console.log('FINAL SUBMIT');
+        // redirect / thank you page
+    }
+
+
+    function resetQuestionUI() {
+        clearInterval(recordInterval);
+        clearInterval(thinkingInterval);
+
+        remaining.textContent = `00:${ANSWER_TIME}`;
+        hasStarted = false;
+        isAutoStop = false;
+
+        chunks = [];
+        remainingRetakes = MAX_RETAKES;
+        updateRetakeUI();
+
+        document.getElementById('recorded').classList.add('d-none');
+        document.getElementById('ans_submit_btn').innerText = 'Start';
+    }
+
+
+    // Refresh Guard
+    function preventRefresh(block) {
+        window.onbeforeunload = block ? () => true : null;
+    }
+
+    // initial 
+    document.addEventListener('DOMContentLoaded', async () => {
+        initSpectrum();
+        const ok = await checkPermission();
+        if (!ok) {
+            modal.style.display = 'flex';
+            page.style.display = 'none';
+            return;
+        }
+
+        modal.style.display = 'none';
+        page.style.display = 'block';
+
+        remaining.textContent = `00:${ANSWER_TIME}`;
+        remainingRetakes = MAX_RETAKES;
+        updateRetakeUI();
+           
+        startThinking(DEFAULT_THINKING_TIME);
+        
+    });
+
+    
+
+    
+</script>
+
+<script>
+    let recordingTimer = null;
+    // Clean up on page exit (production safety)
+   window.addEventListener('beforeunload', () => {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+    });
+    if (interviewType === 'video') {
+        document.getElementById('video_interview').style.display = 'block';
+    }
+    if (interviewType === 'audio') {
+        document.getElementById('audio_interview').style.display = 'block';
+    }
+    if (interviewType === 'text') {
+        document.getElementById('answerTextarea_1').disabled = false;
+    }
+
+</script>
+
+
+ <script>
+  // Submit video
+    //   submitBtn.onclick = async () => {
+    //     const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    //     const formData = new FormData();
+    //     formData.append('video', blob, 'recorded_video.webm');
+    //     formData.append('token', token);
+
+    //     status.innerText = 'Uploading...';
+
+    //     try {
+    //       const response = await fetch('{{ route("record.upload") }}', {
+    //         method: 'POST',
+    //         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+    //         body: formData
+    //       });
+
+    //       if (response.ok) {
+    //         status.innerHTML = '<span class="text-success">✅ Video uploaded successfully!</span>';
+    //         submitBtn.disabled = true;
+    //       } else {
+    //         status.innerHTML = '<span class="text-danger">❌ Upload failed.</span>';
+    //       }
+    //     } catch (error) {
+    //       console.error(error);
+    //       status.innerHTML = '<span class="text-danger">❌ Upload error.</span>';
+    //     }
+    //   };
+</script>
+@endsection
