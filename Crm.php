@@ -12,6 +12,266 @@ class Crm extends Controller
 {
     public function index(){
             $user = Auth::user();
+
+        CREATE TABLE egc_payroll_employee_structures (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    employee_id BIGINT NOT NULL,
+    structure_name VARCHAR(100),
+    gross_salary DECIMAL(12,2),
+    ctc DECIMAL(12,2),
+    effective_from DATE,
+    effective_to DATE,
+    is_active TINYINT DEFAULT 1,
+    created_by BIGINT,
+    updated_by BIGINT,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL
+);
+
+        CREATE TABLE egc_payroll_employee_structure_details (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    structure_id BIGINT,
+    component_id BIGINT,
+    amount DECIMAL(12,2),
+    is_override TINYINT DEFAULT 0,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL
+);
+        ✅ 2. MODEL
+// EmployeeStructureModel.php
+class EmployeeStructureModel extends Model
+{
+    protected $table = 'egc_payroll_employee_structures';
+
+    protected $fillable = [
+        'employee_id',
+        'structure_name',
+        'gross_salary',
+        'ctc',
+        'effective_from',
+        'effective_to',
+        'is_active'
+    ];
+
+    public function details()
+    {
+        return $this->hasMany(EmployeeStructureDetailModel::class, 'structure_id');
+    }
+}
+// Detail Model
+class EmployeeStructureDetailModel extends Model
+{
+    protected $table = 'egc_payroll_employee_structure_details';
+
+    protected $fillable = [
+        'structure_id',
+        'component_id',
+        'amount',
+        'is_override'
+    ];
+}
+✅ 3. CONTROLLER (PRODUCTION LEVEL)
+🔹 INDEX
+public function index(Request $request)
+{
+    $data = EmployeeStructureModel::with('details')
+        ->where('is_active', 1)
+        ->latest()
+        ->paginate(20);
+
+    if ($request->ajax()) {
+        return response()->json($data);
+    }
+
+    return view('content.payroll.employee_structure.index');
+}
+🔹 ADD STRUCTURE (CORE LOGIC)
+public function Add(Request $request)
+{
+    DB::beginTransaction();
+
+    try {
+
+        $structure = EmployeeStructureModel::create([
+            'employee_id'   => $request->employee_id,
+            'structure_name'=> $request->structure_name,
+            'gross_salary'  => $request->gross_salary,
+            'ctc'           => $request->ctc,
+            'effective_from'=> $request->effective_from,
+            'is_active'     => 1
+        ]);
+
+        foreach ($request->components as $c) {
+
+            EmployeeStructureDetailModel::create([
+                'structure_id' => $structure->id,
+                'component_id' => $c['component_id'],
+                'amount'       => $c['amount'],
+                'is_override'  => $c['override'] ?? 0
+            ]);
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'status' => true,
+            'message'=> 'Structure Created'
+        ]);
+
+    } catch (\Exception $e) {
+
+        DB::rollback();
+
+        return response()->json([
+            'status'=> false,
+            'error' => $e->getMessage()
+        ]);
+    }
+}
+🔹 UPDATE
+public function Update(Request $request)
+{
+    DB::beginTransaction();
+
+    $structure = EmployeeStructureModel::find($request->id);
+
+    $structure->update([
+        'gross_salary' => $request->gross_salary,
+        'ctc' => $request->ctc
+    ]);
+
+    EmployeeStructureDetailModel::where('structure_id', $structure->id)->delete();
+
+    foreach ($request->components as $c) {
+
+        EmployeeStructureDetailModel::create([
+            'structure_id' => $structure->id,
+            'component_id' => $c['component_id'],
+            'amount' => $c['amount'],
+            'is_override' => $c['override'] ?? 0
+        ]);
+    }
+
+    DB::commit();
+
+    return response()->json(['status'=>true]);
+}
+🎨 4. ADVANCED UI (THIS IS WHERE YOU WIN)
+🔥 Layout Concept
+----------------------------------------
+Employee: [ Select ]
+Gross Salary: [ ₹ 50000 ]
+
+----------------------------------------
+COMPONENT TABLE
+
+| Component | Formula | Amount | Override |
+|-----------|--------|--------|----------|
+| Basic     | 50%    | 25000  | ☐ |
+| HRA       | 40%    | 10000  | ☐ |
+| PF        | auto   | 1800   | ☐ |
+----------------------------------------
+TOTAL = LIVE CALCULATED
+✅ 5. BLADE UI
+<div class="card">
+    <div class="card-header">
+        <h5>Employee Salary Structure</h5>
+    </div>
+
+    <div class="card-body">
+
+        <select id="employee" class="form-control mb-3"></select>
+
+        <input type="number" id="gross_salary" class="form-control mb-3" placeholder="Gross Salary">
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Component</th>
+                    <th>Formula</th>
+                    <th>Amount</th>
+                    <th>Override</th>
+                </tr>
+            </thead>
+
+            <tbody id="componentTable"></tbody>
+        </table>
+
+        <h5>Total: ₹ <span id="total">0</span></h5>
+
+        <button class="btn btn-primary" onclick="save()">Save</button>
+
+    </div>
+</div>
+⚡ 6. DYNAMIC JS (LIVE CALCULATION)
+function loadComponents(){
+
+    $.get('/formula/list', function(res){
+
+        let html = '';
+
+        res.data.forEach(c => {
+
+            html += `
+            <tr>
+                <td>${c.name}</td>
+                <td>${c.formula_expression}</td>
+                <td><input type="number" class="amount" data-id="${c.id}" /></td>
+                <td><input type="checkbox" class="override"/></td>
+            </tr>`;
+        });
+
+        $('#componentTable').html(html);
+    });
+}
+🔥 LIVE TOTAL
+$(document).on('keyup', '.amount', function(){
+
+    let total = 0;
+
+    $('.amount').each(function(){
+        total += parseFloat($(this).val()) || 0;
+    });
+
+    $('#total').text(total);
+});
+🚀 7. UX UPGRADE (VERY IMPORTANT)
+Add:
+✅ Sticky total bar
+✅ Color coding (earnings vs deductions)
+✅ Auto-fill from formula
+✅ Lock system components (PF/ESI)
+🔥 NEXT LEVEL (RECOMMENDED)
+
+After this module:
+
+👉 You MUST build:
+
+1. Payroll Calculation Engine
+2. Payslip Generator
+3. Monthly Payroll Run
+⚠️ FINAL ADVICE
+
+Right now you're building:
+
+👉 SAP-level payroll system
+
+Do NOT:
+
+Hardcode formulas
+Store only totals
+Skip breakdown table
+👉 If you want next
+
+I can build:
+
+🔥 Auto Formula Calculator Service
+🔥 Real-time salary preview
+🔥 Full payroll run engine
+
+Just say:
+
+👉 "next payroll engine"
             
     
       return view('content.dashboard.hr_ultra',[
