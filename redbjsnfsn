@@ -1,0 +1,4455 @@
+
+
+
+
+
+Pasted code(40).php
+File
+
+Pasted code (2)(8).php
+File
+<?php
+
+namespace App\Http\Controllers\hr_management\hr_recruiter;
+
+use App\Http\Controllers\Controller;
+use App\Services\ApplicantBatchService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Throwable;
+
+class BulkApplicantAIController extends Controller
+{
+    protected ApplicantBatchService $batchService;
+
+    public function __construct(
+        ApplicantBatchService $batchService
+    ) {
+        $this->batchService = $batchService;
+    }
+
+    /**
+     * Bulk AI Role Matching
+     *
+     * POST /api/ai/bulk-role-matching
+     */
+    public function bulkRoleMatching(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+
+            'batch_size' => 'nullable|integer|min:1|max:10',
+
+            'limit' => 'nullable|integer|min:1|max:500',
+
+        ]);
+
+        if ($validator->fails()) {
+
+            return response()->json([
+
+                'status' => false,
+
+                'message' => 'Validation Failed.',
+
+                'errors' => $validator->errors()
+
+            ], 422);
+
+        }
+
+        $batchSize = (int) $request->input('batch_size', 5);
+
+        $limit = (int) $request->input('limit', 100);
+        $offset = (int)$request->input('offset', 0);
+
+        try {
+
+            $result = $this->batchService->process(
+
+                $batchSize,
+
+                $limit,
+                $offset
+
+            );
+
+            return response()->json([
+
+                'status' => true,
+
+                'message' => 'AI Role Matching Completed.',
+
+                'data' => $result
+
+            ]);
+
+        } catch (Throwable $e) {
+
+            \Log::error(
+
+                'Bulk AI Matching Error',
+
+                [
+
+                    'message' => $e->getMessage(),
+
+                    'line' => $e->getLine(),
+
+                    'file' => $e->getFile()
+
+                ]
+
+            );
+
+            return response()->json([
+
+                'status' => false,
+
+                'message' => 'Bulk AI Matching Failed.',
+
+                'error' => app()->environment('local')
+                    ? $e->getMessage()
+                    : null
+
+            ], 500);
+
+        }
+
+    }
+}<?php
+
+namespace App\Services;
+
+use App\Models\ApplicantModel;
+use Smalot\PdfParser\Parser;
+use PhpOffice\PhpWord\IOFactory;
+use Illuminate\Support\Facades\Log;
+use Exception;
+
+class ResumeParserService
+{
+
+    protected GoogleDriveService $googleDriveService;
+
+    public function __construct(
+        GoogleDriveService $googleDriveService
+    ){
+        $this->googleDriveService = $googleDriveService;
+    }
+
+    /**
+     * Get Resume Text
+     */
+    public function getResumeText(ApplicantModel $applicant)
+    {
+
+        // Already available
+        if (!empty($applicant->resume_text)) {
+            return trim($applicant->resume_text);
+        }
+
+        $resumeText = '';
+
+        $driveData = $applicant->drive_data
+            ? json_decode($applicant->drive_data)
+            : null;
+
+        /**
+         * Google Drive File
+         */
+        if (
+            $driveData &&
+            !isset($driveData->errors) &&
+            !empty($driveData->file_id)
+        ) {
+
+            $resumeText = $this->extractResumeTextFromDrive(
+                $driveData->file_id
+            );
+
+        }
+
+        /**
+         * Local Attachment
+         */
+        if (
+            empty($resumeText) &&
+            !empty($applicant->attachment)
+        ) {
+
+            $path = public_path(
+                'job_applications/resume_files/' .
+                $applicant->attachment
+            );
+
+            $resumeText = $this->extractResumeText($path);
+
+        }
+
+        /**
+         * Save extracted text
+         */
+        if (!empty($resumeText)) {
+
+            $applicant->resume_text = $resumeText;
+
+            $applicant->save();
+
+        }
+
+        return trim($resumeText);
+
+    }
+
+    /**
+     * Extract Resume
+     */
+    public function extractResumeText($filePath)
+    {
+
+        if (!file_exists($filePath)) {
+            return '';
+        }
+
+        $extension = strtolower(
+            pathinfo($filePath, PATHINFO_EXTENSION)
+        );
+
+        switch ($extension) {
+
+            case 'pdf':
+                return $this->parsePdf($filePath);
+
+            case 'docx':
+                return $this->parseDocx($filePath);
+
+            case 'txt':
+                return file_get_contents($filePath);
+
+            default:
+                return '';
+
+        }
+
+    }
+
+    /**
+     * PDF
+     */
+    private function parsePdf($file)
+    {
+
+        try {
+
+            $parser = new Parser();
+
+            $pdf = $parser->parseFile($file);
+
+            return $pdf->getText();
+
+        } catch (\Exception $e) {
+
+            Log::error($e->getMessage());
+
+            return '';
+
+        }
+
+    }
+
+    /**
+     * DOCX
+     */
+    private function parseDocx($file)
+    {
+
+        try {
+
+            $phpWord = IOFactory::load($file);
+
+            $text = '';
+
+            foreach ($phpWord->getSections() as $section) {
+
+                foreach ($section->getElements() as $element) {
+
+                    if (method_exists($element, 'getText')) {
+
+                        $text .= $element->getText() . " ";
+
+                    }
+
+                }
+
+            }
+
+            return $text;
+
+        } catch (\Exception $e) {
+
+            Log::error($e->getMessage());
+
+            return '';
+
+        }
+
+    }
+
+    /**
+     * Google Drive
+     *
+     * Reuse your existing function here.
+     */
+    private function extractResumeTextFromDrive($fileId)
+    {
+
+        /**
+         * Move your existing
+         * extractResumeTextFromDrive()
+         * code here.
+         */
+        try {
+            $filePath = $this->googleDriveService->downloadFile($fileId);
+
+            $mime = mime_content_type($filePath);
+
+            $extension = match ($mime) {
+                'application/pdf' => 'pdf',
+                'application/msword' => 'doc',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+                default => throw new Exception("Unsupported MIME type: {$mime}")
+            };
+
+            $finalPath = $filePath . '.' . $extension;
+            rename($filePath, $finalPath);
+
+            $text = $this->extractResumeText($finalPath);
+
+            unlink($finalPath);
+
+            return $text;
+        } catch (Exception $e) {
+            Log::error('Resume extraction failed', [
+                'file_id' => $fileId,
+                'error' => $e->getMessage()
+            ]);
+            return '';
+        }
+    }
+
+}<?php 
+
+namespace App\Services;
+
+class PromptBuilderService
+{
+    /**
+     * Build Prompt for Role Matching
+     */
+    public function roleMatching(
+        string $resume,
+        array $roles
+    ): string {
+
+        $roles = json_encode(
+            $roles,
+            JSON_UNESCAPED_UNICODE
+        );
+
+        $resume = trim(
+            mb_substr($resume,0,6000)
+        );
+
+        return <<<PROMPT
+You are an advanced AI Recruitment ATS.
+
+You are NOT allowed to create your own roles.
+
+Match the candidate ONLY against the supplied roles.
+
+Rules:
+
+1. Use ONLY role_id values provided.
+2. Never invent a role.
+3. Return maximum 3 roles.
+4. Sort by confidence descending.
+5. Confidence must be between 0 and 100.
+6. Consider:
+   - Job Titles
+   - Skills
+   - Technologies
+   - Responsibilities
+   - Experience
+   - Domain
+7. Ignore formatting mistakes.
+8. Return JSON ONLY.
+
+Available Roles
+
+$roles
+
+Candidate Resume
+
+$resume
+
+Output
+
+{
+    "matches":[
+        {
+            "role_id":1,
+            "confidence":97,
+            "reason":"Primary skills strongly match this role."
+        },
+        {
+            "role_id":5,
+            "confidence":88,
+            "reason":"Secondary match."
+        }
+    ]
+}
+PROMPT;
+
+    }
+
+    /**
+     * Resume Summary
+     */
+    public function resumeSummary(
+        string $resume
+    ): string {
+
+        return <<<PROMPT
+Summarize this resume.
+
+Return JSON only.
+
+{
+    "summary":"",
+    "experience_years":"",
+    "education":"",
+    "strengths":[]
+}
+
+Resume
+
+$resume
+PROMPT;
+
+    }
+
+    /**
+     * Skill Extraction
+     */
+    public function skillExtraction(
+        string $resume
+    ): string {
+
+        return <<<PROMPT
+Extract all technical and non-technical skills.
+
+Return JSON only.
+
+{
+    "technical_skills":[],
+    "soft_skills":[]
+}
+
+Resume
+
+$resume
+PROMPT;
+
+    }
+
+    /**
+     * Experience Extraction
+     */
+    public function experienceExtraction(
+        string $resume
+    ): string {
+
+        return <<<PROMPT
+Extract work experience.
+
+Return JSON only.
+
+{
+   "experience":[
+      {
+         "company":"",
+         "designation":"",
+         "duration":"",
+         "skills":[]
+      }
+   ]
+}
+
+Resume
+
+$resume
+PROMPT;
+
+    }
+
+    /**
+     * Interview Questions
+     */
+    public function interviewQuestions(
+        string $resume,
+        string $role
+    ): string {
+
+        return <<<PROMPT
+Generate 10 interview questions.
+
+Role
+
+$role
+
+Resume
+
+$resume
+
+Return JSON only.
+
+{
+    "questions":[]
+}
+PROMPT;
+
+    }
+
+    /**
+     * Resume Score
+     */
+    public function resumeScore(
+        string $resume
+    ): string {
+
+        return <<<PROMPT
+Score the resume out of 100.
+
+Return JSON only.
+
+{
+    "score":0,
+    "remarks":""
+}
+
+Resume
+
+$resume
+PROMPT;
+
+    }
+/**
+ * Batch Role Matching + ATS Resume Evaluation
+ */
+public function batchRoleMatching(
+    array $applicants,
+    array $roles
+): string {
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Prepare Applicants
+    |--------------------------------------------------------------------------
+    */
+
+    $resumeData = [];
+
+
+    foreach ($applicants as $row) {
+
+
+        $resumeData[] = [
+
+            "applicant_id"=>$row['sno'],
+
+            "resume"=>trim(
+                mb_substr(
+                    $row['resume'],
+                    0,
+                    5000
+                )
+            )
+
+        ];
+
+    }
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Roles JSON
+    |--------------------------------------------------------------------------
+    */
+
+    $rolesJson = json_encode(
+
+        $roles,
+
+        JSON_PRETTY_PRINT |
+        JSON_UNESCAPED_UNICODE
+
+    );
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Resume JSON
+    |--------------------------------------------------------------------------
+    */
+
+    $resumeJson = json_encode(
+
+        $resumeData,
+
+        JSON_PRETTY_PRINT |
+        JSON_UNESCAPED_UNICODE
+
+    );
+
+
+
+return <<<PROMPT
+
+You are an Enterprise AI Recruitment ATS System.
+
+SYSTEM MESSAGE:
+
+You are a JSON API service.
+
+Your output is consumed by PHP json_decode().
+
+You MUST never talk to the user.
+
+You MUST never explain your answer.
+
+Only return machine readable JSON.
+
+You act as both:
+
+1. ATS Resume Screening Engine
+2. Senior HR Recruiter
+
+
+Your task:
+
+For every applicant:
+
+A) Match the resume with suitable job roles.
+
+B) Generate overall resume ATS evaluation.
+
+
+
+===========================
+ROLE MATCHING RULES
+===========================
+
+
+1. Use ONLY supplied role_id.
+2. Never create new roles.
+3. Never modify role_id.
+4. Maximum 3 role matches.
+5. Sort confidence highest first.
+6. Confidence must be 0-100.
+7. Every applicant must return matches.
+
+
+
+===========================
+ATS EVALUATION RULES
+===========================
+
+
+Evaluate the COMPLETE resume.
+
+Do NOT evaluate separately for each role.
+
+
+Generate:
+
+
+1. Overall Match Score
+2. ATS Keyword Match Score
+3. Skills Alignment Score
+4. Experience Relevance Score
+5. Impact & Achievement Score
+
+(Check measurable achievements:
+%, numbers, revenue, efficiency, growth)
+
+6. Role Responsibility Match Score
+
+
+Also identify:
+
+- Missing keywords
+- Candidate strengths
+- Candidate weaknesses
+- Resume improvements
+- Achievement focused bullet rewrites
+- Professional summary
+
+
+
+===========================
+CRITICAL OUTPUT RULES
+===========================
+
+
+FOLLOW THESE RULES STRICTLY:
+
+
+1. RETURN ONLY ONE JSON OBJECT.
+
+2. DO NOT RETURN MULTIPLE JSON OBJECTS.
+
+3. DO NOT CREATE SEPARATE OUTPUT FOR EACH APPLICANT.
+
+4. DO NOT WRITE:
+   Applicant 1:
+   Applicant 2:
+   Candidate 1:
+   Candidate 2:
+
+5. DO NOT ADD:
+   - explanations
+   - notes
+   - comments
+   - markdown
+   - 
+json blocks
+
+6. The entire response must start with {
+
+7. The entire response must end with }
+
+8. Every applicant must be inside the SAME "results" array.
+
+9. Maintain applicant_id exactly as provided.
+
+10. If any applicant has no suitable role, still return:
+
+{
+ "matches":[]
+}
+
+11. Never remove any applicant from results.
+
+12. JSON keys must remain exactly:
+    results
+    applicant_id
+    matches
+    role_id
+    confidence
+    reason
+    ai_response
+
+
+YOUR RESPONSE WILL BE PARSED DIRECTLY USING JSON DECODER.
+ANY TEXT OUTSIDE JSON WILL CAUSE FAILURE.
+
+
+AVAILABLE ROLES:
+
+
+$rolesJson
+
+
+
+APPLICANTS:
+
+
+$resumeJson
+
+
+
+OUTPUT FORMAT:
+
+
+{
+"results":[
+
+{
+
+"applicant_id":"11",
+
+
+"matches":[
+
+{
+"role_id":1,
+"confidence":95,
+"reason":"Strong skill match"
+}
+
+],
+
+
+
+"ai_response":{
+
+"overall_match_score":0,
+
+"ats_keyword_match_score":0,
+
+"skills_alignment_score":0,
+
+"experience_relevance_score":0,
+
+"impact_metrics_score":0,
+
+"role_responsibility_match_score":0,
+
+
+"missing_keywords":[],
+
+"strengths":[],
+
+"weaknesses":[],
+
+"resume_improvements":[],
+
+"rewritten_bullets":[],
+
+"optimized_summary":""
+
+}
+
+}
+
+]
+
+}
+
+
+PROMPT;
+
+}
+
+
+
+}<?php
+
+namespace App\Services;
+
+class ResumeFeatureExtractorService
+{
+    /**
+     * Extract Resume Features
+     */
+    public function extract(string $resume): array
+    {
+        $resume = strtolower(strip_tags($resume));
+
+        // remove special characters
+        $resume = preg_replace('/[^a-z0-9\s]/', ' ', $resume);
+
+        // multiple spaces
+        $resume = preg_replace('/\s+/', ' ', $resume);
+
+        $words = explode(' ', $resume);
+
+        $words = array_filter($words,function($word){
+
+            return strlen($word)>=3;
+
+        });
+
+        $words = array_unique($words);
+
+        return [
+
+            'tokens'=>array_values($words),
+
+            'text'=>$resume
+
+        ];
+    }
+
+    /**
+     * Token Matching Score
+     */
+    public function scoreRole(
+        array $tokens,
+        string $roleName
+    ): float
+    {
+
+        $role = strtolower($roleName);
+
+        $score = 0;
+
+        foreach($tokens as $token){
+
+            if(str_contains($role,$token)){
+
+                $score += 20;
+
+            }
+
+        }
+
+        similar_text(
+
+            implode(' ',$tokens),
+
+            $role,
+
+            $percent
+
+        );
+
+        return $score+$percent;
+
+    }
+
+}Route::post( 
+    '/ai/bulk-role-matching',
+    [BulkApplicantAIController::class, 'bulkRoleMatching']
+);<?php
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+
+class AIResponseValidatorService
+{
+
+    /**
+     * Validate Single Role Matching
+     */
+    public function validateRoleMatching(array $response): array
+    {
+
+        if (!isset($response['matches'])) {
+
+            return [
+                'status'=>false,
+                'message'=>'matches key missing.'
+            ];
+
+        }
+
+
+        if (!is_array($response['matches'])) {
+
+            return [
+                'status'=>false,
+                'message'=>'matches should be array.'
+            ];
+
+        }
+
+
+        $validRoleIds = $this->getRoleIds();
+
+
+        $matches=[];
+
+
+        foreach($response['matches'] as $match){
+
+
+            if(
+                !isset($match['role_id']) ||
+                !isset($match['confidence'])
+            ){
+                continue;
+            }
+
+
+
+            $roleId=(int)$match['role_id'];
+
+
+            $confidence=(float)$match['confidence'];
+
+
+
+            /*
+            |--------------------------------------------------
+            | Check Role Exists
+            |--------------------------------------------------
+            */
+
+            if(!in_array($roleId,$validRoleIds)){
+
+                continue;
+
+            }
+
+
+
+            /*
+            |--------------------------------------------------
+            | Confidence Range
+            |--------------------------------------------------
+            */
+
+            $confidence=max(
+                0,
+                min(
+                    100,
+                    $confidence
+                )
+            );
+
+
+
+            $matches[]=[
+
+                'role_id'=>$roleId,
+
+                'confidence'=>round(
+                    $confidence,
+                    2
+                ),
+
+                'reason'=>$match['reason'] ?? null
+
+            ];
+
+        }
+
+
+
+        if(empty($matches)){
+
+
+            return [
+
+                'status'=>false,
+
+                'message'=>'No valid roles returned.'
+
+            ];
+
+        }
+
+
+
+        /*
+        |--------------------------------------------------
+        | Highest Confidence First
+        |--------------------------------------------------
+        */
+
+        usort(
+            $matches,
+            function($a,$b){
+
+                return $b['confidence']
+                    <=>
+                    $a['confidence'];
+
+            }
+        );
+
+
+
+        return [
+
+            'status'=>true,
+
+            'matches'=>array_slice(
+                $matches,
+                0,
+                3
+            )
+
+        ];
+
+    }
+
+
+
+
+
+    /**
+     * Validate Batch ATS Response
+     */
+    public function validateBatchRoleMatching(
+        array $response
+    ): array
+    {
+
+
+        if(!isset($response['results'])){
+
+
+            return [
+
+                'status'=>false,
+
+                'message'=>'results key missing.'
+
+            ];
+
+        }
+
+
+
+        if(!is_array($response['results'])){
+
+
+            return [
+
+                'status'=>false,
+
+                'message'=>'results should be array.'
+
+            ];
+
+        }
+
+
+
+        $validated=[];
+
+
+
+        foreach($response['results'] as $item){
+
+
+
+            if(
+                empty($item['applicant_id'])
+            ){
+
+                continue;
+
+            }
+
+
+
+            /*
+            |--------------------------------------------------
+            | Validate Matches
+            |--------------------------------------------------
+            */
+
+            $matches=$this->validateRoleMatching([
+
+                'matches'=>$item['matches'] ?? []
+
+            ]);
+
+
+
+            /*
+            |--------------------------------------------------
+            | Keep Applicant Even If AI Failed
+            |--------------------------------------------------
+            */
+
+            if(!$matches['status']){
+
+
+                $validated[]=[
+
+                    'applicant_id'=>$item['applicant_id'],
+
+                    'matches'=>[],
+
+                    'ai_response'=>$this->validateAIResponse(
+                        $item['ai_response'] ?? []
+                    )
+
+                ];
+
+
+                continue;
+
+            }
+
+
+
+            $validated[]=[
+
+
+                'applicant_id'=>$item['applicant_id'],
+
+
+                'matches'=>$matches['matches'],
+
+
+                'ai_response'=>$this->validateAIResponse(
+
+                    $item['ai_response'] ?? []
+
+                )
+
+
+            ];
+
+        }
+
+
+
+        return [
+
+            'status'=>true,
+
+            'results'=>$validated
+
+        ];
+
+    }
+
+
+
+
+
+    /**
+     * Validate ATS AI Response
+     */
+    private function validateAIResponse(
+        array $ai
+    ): array {
+
+
+        return [
+
+
+            "overall_match_score"=>
+                $this->score(
+                    $ai['overall_match_score'] ?? 0
+                ),
+
+
+            "ats_keyword_match_score"=>
+                $this->score(
+                    $ai['ats_keyword_match_score'] ?? 0
+                ),
+
+
+            "skills_alignment_score"=>
+                $this->score(
+                    $ai['skills_alignment_score'] ?? 0
+                ),
+
+
+            "experience_relevance_score"=>
+                $this->score(
+                    $ai['experience_relevance_score'] ?? 0
+                ),
+
+
+            "impact_metrics_score"=>
+                $this->score(
+                    $ai['impact_metrics_score'] ?? 0
+                ),
+
+
+            "role_responsibility_match_score"=>
+                $this->score(
+                    $ai['role_responsibility_match_score'] ?? 0
+                ),
+
+
+
+            "missing_keywords"=>
+                $this->arrayValue(
+                    $ai['missing_keywords'] ?? []
+                ),
+
+
+
+            "strengths"=>
+                $this->arrayValue(
+                    $ai['strengths'] ?? []
+                ),
+
+
+
+            "weaknesses"=>
+                $this->arrayValue(
+                    $ai['weaknesses'] ?? []
+                ),
+
+
+
+            "resume_improvements"=>
+                $this->arrayValue(
+                    $ai['resume_improvements'] ?? []
+                ),
+
+
+
+            "rewritten_bullets"=>
+                $this->arrayValue(
+                    $ai['rewritten_bullets'] ?? []
+                ),
+
+
+
+            "optimized_summary"=>
+                $ai['optimized_summary'] ?? ''
+
+        ];
+
+    }
+
+
+
+
+
+    /**
+     * Score Validation
+     */
+    private function score($value): int
+    {
+
+        return max(
+            0,
+            min(
+                100,
+                (int)$value
+            )
+        );
+
+    }
+
+
+
+
+
+    private function arrayValue($value): array
+    {
+
+        return is_array($value)
+            ? $value
+            : [];
+
+    }
+
+
+
+
+
+    /**
+     * Active Role IDs
+     */
+    private function getRoleIds(): array
+    {
+
+        return Cache::rememberForever(
+
+            'hf_role_ids',
+
+            function(){
+
+                return DB::table(
+                    'egc_recruitment_roles'
+                )
+                ->where('status',0)
+                ->pluck('sno')
+                ->toArray();
+
+            }
+
+        );
+
+    }
+
+
+
+
+    /**
+     * Clear Cache
+     */
+    public function clearCache()
+    {
+
+        Cache::forget(
+            'hf_role_ids'
+        );
+
+    }
+
+
+}<?php
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Exception;
+
+class HuggingFaceClientService
+{
+    /**
+     * Default Model
+     */
+    protected string $model = 'meta-llama/Llama-3.1-8B-Instruct:novita';
+
+    /**
+     * Send Prompt
+     */
+    public function ask(
+        string $prompt,
+        string $model = null,
+        int $temperature = 0,
+        int $timeout = 120
+    ): array {
+
+        try {
+
+            $apiKey = $this->getApiKey();
+
+            if (!$apiKey) {
+
+                return [
+                    'status' => false,
+                    'message' => 'HuggingFace API Key Missing'
+                ];
+
+            }
+
+            $response = Http::timeout($timeout)
+
+                ->retry(3,3000)
+
+                ->withToken($apiKey)
+
+                ->acceptJson()
+
+                ->post(
+
+                    'https://router.huggingface.co/v1/chat/completions',
+
+                    [
+                        'model'=>$model ?? $this->model,
+
+                        'messages'=>[
+                            [
+                                'role'=>'system',
+                                'content'=>'Return only valid JSON. No markdown. No explanation.'
+                            ],
+                            [
+                                'role'=>'user',
+                                'content'=>$prompt
+                            ]
+                        ],
+
+                        'temperature'=>0,
+
+                        'response_format'=>[
+                            'type'=>'json_object'
+                        ],
+
+                        'stream'=>false
+                    ]
+
+                );
+
+            if(!$response->successful()){
+
+                Log::error(
+                    'HF API ERROR',
+                    [
+                        'status'=>$response->status(),
+                        'body'=>$response->body()
+                    ]
+                );
+
+                return [
+
+                    'status'=>false,
+
+                    'message'=>$response->body()
+
+                ];
+
+            }
+
+            $content = data_get(
+
+                $response->json(),
+
+                'choices.0.message.content'
+
+            );
+
+            return [
+
+                'status'=>true,
+
+                'content'=>$this->cleanJson($content)
+
+            ];
+
+        }
+
+        catch(Exception $e){
+
+            Log::error(
+
+                'HF Exception',
+
+                [
+
+                    'message'=>$e->getMessage()
+
+                ]
+
+            );
+
+            return [
+
+                'status'=>false,
+
+                'message'=>$e->getMessage()
+
+            ];
+
+        }
+
+    }
+
+    /**
+     * JSON Response
+     */
+    public function askJson(
+    string $prompt,
+    string $model = null
+): array
+{
+
+    $response = $this->ask(
+        $prompt,
+        $model
+    );
+
+
+    if(!$response['status']){
+
+        return $response;
+
+    }
+
+
+    $cleanJson = $this->extractJson(
+        $response['content']
+    );
+
+
+    $json = json_decode(
+        $cleanJson,
+        true
+    );
+
+
+    if(json_last_error()!=JSON_ERROR_NONE){
+
+
+        Log::error(
+            'AI JSON Decode Failed',
+            [
+                'error'=>json_last_error_msg(),
+                'json'=>$cleanJson
+            ]
+        );
+
+
+        return [
+
+            'status'=>false,
+
+            'message'=>'Invalid JSON returned by AI.',
+
+            'raw'=>$response['content']
+
+        ];
+
+    }
+
+
+
+    return [
+
+        'status'=>true,
+
+        'data'=>$json
+
+    ];
+
+}
+
+    /**
+     * Clean AI JSON
+     */
+   private function cleanJson($text): string
+    {
+
+        $text = trim($text);
+
+
+        // remove markdown
+        $text = preg_replace(
+            '/
+(?:json)?/i',
+            '',
+            $text
+        );
+
+
+        // remove common AI prefixes
+        $patterns = [
+            '/^Here is.*?:/is',
+            '/^Output:/is',
+            '/^JSON:/is'
+        ];
+
+
+        foreach($patterns as $pattern){
+
+            $text = preg_replace(
+                $pattern,
+                '',
+                $text
+            );
+
+        }
+
+
+        return trim($text);
+    }
+
+private function extractJson(string $text): string
+{
+    $text = $this->cleanJson($text);
+
+    $start = strpos($text, '{');
+
+    if ($start === false) {
+        return '';
+    }
+
+
+    $json = substr($text, $start);
+
+
+    $brace = 0;
+    $bracket = 0;
+
+    $inString = false;
+    $escape = false;
+
+
+    for($i=0; $i < strlen($json); $i++)
+    {
+
+        $char = $json[$i];
+
+
+        if($char === '"' && !$escape)
+        {
+            $inString = !$inString;
+        }
+
+
+        if($char === '\\' && !$escape)
+        {
+            $escape = true;
+            continue;
+        }
+
+
+        $escape = false;
+
+
+        if(!$inString)
+        {
+
+            if($char === '{')
+            {
+                $brace++;
+            }
+
+            elseif($char === '}')
+            {
+                $brace--;
+            }
+
+
+            elseif($char === '[')
+            {
+                $bracket++;
+            }
+
+
+            elseif($char === ']')
+            {
+                $bracket--;
+            }
+
+
+            if($brace === 0 && $bracket === 0)
+            {
+                return substr(
+                    $json,
+                    0,
+                    $i+1
+                );
+            }
+
+        }
+
+    }
+
+
+    return '';
+}
+
+    /**
+     * API Key
+     */
+    private function getApiKey(): ?string
+    {
+        return Cache::rememberForever(
+
+            'hf_api_key',
+
+            function(){
+
+                $api = DB::table(
+                    'egc_api_integration'
+                )
+
+                ->where(
+                    'api_key',
+                    'egc_huggingface_api_1'
+                )
+
+                ->where(
+                    'status',
+                    0
+                )
+
+                ->latest('sno')
+
+                ->first();
+
+                if(!$api){
+
+                    return null;
+
+                }
+
+                $fields = json_decode(
+                    $api->api_fields,
+                    true
+                );
+
+                foreach($fields as $field){
+
+                    if($field['key']=='api_key'){
+
+                        return trim(
+                            $field['value']
+                        );
+
+                    }
+
+                }
+
+                return null;
+
+            }
+
+        );
+    }
+
+    /**
+     * Clear API Cache
+     */
+    public function clearApiCache()
+    {
+        Cache::forget(
+            'hf_api_key'
+        );
+    }
+
+    /**
+     * Change Default Model
+     */
+    public function setModel(
+        string $model
+    )
+    {
+        $this->model = $model;
+    }
+
+}<?php
+
+namespace App\Services;
+
+use App\Models\ApplicantModel;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Exception;
+
+class ApplicantUpdaterService
+{
+    /**
+     * Save AI Role Matching
+     */
+    public function saveRoleMatching(
+        ApplicantModel $applicant,
+         array $aiData
+    ): array {
+
+        DB::beginTransaction();
+
+        try {
+
+            $roleIds = collect($aiData['matches'])
+                    ->pluck('role_id')
+                    ->unique()
+                    ->values()
+                    ->toArray();
+
+            // $confidence = collect($matches)
+            //     ->max('confidence');
+
+            $applicant->job_role_id = json_encode(
+                $roleIds,
+                JSON_UNESCAPED_UNICODE
+            );
+
+            // $applicant->match_score = $confidence;
+
+            $applicant->ai_response = json_encode(
+                 $aiData,
+                JSON_UNESCAPED_UNICODE
+            );
+
+            $applicant->updated_at = now();
+
+            $applicant->save();
+
+            DB::commit();
+
+            return [
+
+                'status' => true,
+
+                'message' => 'Updated successfully.',
+
+                'job_role_ids' => $roleIds,
+
+                // 'confidence' => $confidence
+
+            ];
+
+        } catch (Exception $e) {
+
+            DB::rollBack();
+
+            Log::error(
+                'Applicant Update Failed',
+                [
+                    'applicant_id' => $applicant->sno,
+                    'error' => $e->getMessage()
+                ]
+            );
+
+            return [
+
+                'status' => false,
+
+                'message' => $e->getMessage()
+
+            ];
+
+        }
+
+    }
+
+    /**
+     * Clear AI Result
+     */
+    public function clearRoleMatching(
+        ApplicantModel $applicant
+    ): bool {
+
+        return $applicant->update([
+
+            'job_role_id' => null,
+
+            'match_score' => null,
+
+            'ai_response' => null
+
+        ]);
+
+    }
+
+    /**
+     * Update Resume Text
+     */
+    // public function updateResumeText(
+    //     ApplicantModel $applicant,
+    //     string $resume
+    // ): bool {
+
+    //     return $applicant->update([
+
+    //         'resume_text' => $resume
+
+    //     ]);
+
+    // }
+
+    public function updateResumeText(
+        ApplicantModel $applicant,
+        string $resume
+    ): bool {
+
+
+        // Remove invalid UTF8 characters
+        $resume = mb_convert_encoding(
+            $resume,
+            'UTF-8',
+            'UTF-8'
+        );
+
+
+        // Remove control characters from PDF
+        $resume = preg_replace(
+            '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/',
+            '',
+            $resume
+        );
+
+
+        return $applicant->update([
+            'resume_text'=>$resume
+        ]);
+
+    }
+
+} analyse this all codes thouroughly in production server of hr Recruitmnet i has 20k records dont has job_role_ids matched for applicants so i wnat bulk update for applicants using hugging face llm modal locally so ist correct its only match job_role_ids only matching if not matching match rol_ids is empty ai_resposne only full dteailde is correct advanced and usefully for recruiter ? if not correct the prompt or anthing for featured advanced 
+
+Perfect. Now we'll build what makes your ATS feel like LinkedIn Recruiter + Greenhouse + Workday.
+
+Part 6 – Resume Intelligence Viewer
+Instead of simply showing the resume PDF or plain extracted text, we'll create an AI Resume Intelligence screen.
+
+Final Layout
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Resume Intelligence                                    Download Resume      │
+├──────────────────────────────────────────────────────────────────────────────┤
+
+Resume Preview
+
+───────────────────────────────────────────────────────────────────────────────
+
+Professional Summary
+
+Experienced Laravel Developer with 5 years...
+
+───────────────────────────────────────────────────────────────────────────────
+
+Skills Detected
+
+Laravel     PHP      MySQL      REST API      Git      Docker
+
+───────────────────────────────────────────────────────────────────────────────
+
+Experience
+
+ABC Technologies
+
+Senior Laravel Developer
+
+2022 - Present
+
+Highlighted Responsibilities
+
+✓ Built ERP Modules
+
+✓ Payment Gateway
+
+✓ REST APIs
+
+✓ Queue Jobs
+
+───────────────────────────────────────────────────────────────────────────────
+
+Education
+
+B.Tech Information Technology
+
+───────────────────────────────────────────────────────────────────────────────
+
+Certificates
+
+AWS Cloud
+
+Laravel Certified
+
+───────────────────────────────────────────────────────────────────────────────
+
+AI Highlighted Keywords
+
+Laravel
+ERP
+REST
+API
+Microservices
+Redis
+Queue
+
+───────────────────────────────────────────────────────────────────────────────
+
+Missing Keywords
+
+Docker
+
+AWS
+
+CI/CD
+
+Kubernetes
+
+───────────────────────────────────────────────────────────────────────────────
+
+Resume Text Viewer
+
+(Entire extracted resume)
+
+Highlighted with colored keywords
+Backend Changes
+Instead of
+
+'resume'=>[
+    'text'=>$applicant->resume_text
+]
+Return
+
+'resume'=>[
+
+    'attachment'=>$applicant->attachment,
+
+    'text'=>$applicant->resume_text,
+
+    'summary'=>$parsedSummary,
+
+    'skills'=>$skills,
+
+    'experience'=>$experience,
+
+    'education'=>$education,
+
+    'certifications'=>$certifications
+
+]
+Don't make the frontend parse the resume again. The backend should prepare structured data.
+
+Resume Tab
+function renderResume(data)
+{
+
+    let resume=data.resume;
+
+    $("#resumeTab").html(`
+
+        ${resumeHeader(resume)}
+
+        ${resumeSummary(resume)}
+
+        ${skillsSection(resume)}
+
+        ${experienceSection(resume)}
+
+        ${educationSection(resume)}
+
+        ${certificateSection(resume)}
+
+        ${keywordSection(data.ai)}
+
+        ${resumeTextViewer(resume)}
+
+    `);
+
+}
+Resume Header
+function resumeHeader(resume)
+{
+
+return `
+
+<div class="card shadow-sm">
+
+<div class="card-body d-flex justify-content-between">
+
+<div>
+
+<h4>
+
+Resume Intelligence
+
+</h4>
+
+<div class="text-muted">
+
+AI Extracted Resume
+
+</div>
+
+</div>
+
+<a
+
+href="/job_applications/resume_files/${resume.attachment}"
+
+target="_blank"
+
+class="btn btn-primary">
+
+<i class="mdi mdi-download"></i>
+
+Download Resume
+
+</a>
+
+</div>
+
+</div>
+
+`;
+
+}
+Professional Summary
+function resumeSummary(resume)
+{
+
+return `
+
+<div class="card mt-4">
+
+<div class="card-body">
+
+<h5>
+
+Professional Summary
+
+</h5>
+
+<p>
+
+${resume.summary}
+
+</p>
+
+</div>
+
+</div>
+
+`;
+
+}
+Skills
+function skillsSection(resume)
+{
+
+let html="";
+
+(resume.skills||[]).forEach(skill=>{
+
+html+=`
+
+<span class="badge bg-success m-1">
+
+${skill}
+
+</span>
+
+`;
+
+});
+
+return `
+
+<div class="card mt-4">
+
+<div class="card-body">
+
+<h5>
+
+Detected Skills
+
+</h5>
+
+${html}
+
+</div>
+
+</div>
+
+`;
+
+}
+Experience
+function experienceSection(resume)
+{
+
+let html="";
+
+(resume.experience||[]).forEach(job=>{
+
+html+=`
+
+<div class="timeline-item">
+
+<h5>
+
+${job.company}
+
+</h5>
+
+<div>
+
+${job.designation}
+
+</div>
+
+<div class="text-muted">
+
+${job.duration}
+
+</div>
+
+<ul>
+
+${job.responsibilities.map(x=>`<li>${x}</li>`).join("")}
+
+</ul>
+
+</div>
+
+`;
+
+});
+
+return `
+
+<div class="card mt-4">
+
+<div class="card-body">
+
+<h5>
+
+Experience
+
+</h5>
+
+${html}
+
+</div>
+
+</div>
+
+`;
+
+}
+Education
+function educationSection(resume)
+{
+
+let html="";
+
+(resume.education||[]).forEach(x=>{
+
+html+=`
+
+<div class="mb-3">
+
+<strong>
+
+${x.degree}
+
+</strong>
+
+<div>
+
+${x.college}
+
+</div>
+
+<div>
+
+${x.year}
+
+</div>
+
+</div>
+
+`;
+
+});
+
+return `
+
+<div class="card mt-4">
+
+<div class="card-body">
+
+<h5>
+
+Education
+
+</h5>
+
+${html}
+
+</div>
+
+</div>
+
+`;
+
+}
+AI Keywords
+function keywordSection(ai)
+{
+
+let positive="";
+
+(ai.ai_response.detected_keywords||[]).forEach(x=>{
+
+positive+=`
+
+<span class="badge bg-primary me-2 mb-2">
+
+${x}
+
+</span>
+
+`;
+
+});
+
+let missing="";
+
+(ai.ai_response.missing_keywords||[]).forEach(x=>{
+
+missing+=`
+
+<span class="badge bg-danger me-2 mb-2">
+
+${x}
+
+</span>
+
+`;
+
+});
+
+return `
+
+<div class="row mt-4">
+
+<div class="col-lg-6">
+
+<div class="card">
+
+<div class="card-body">
+
+<h5>
+
+Detected Keywords
+
+</h5>
+
+${positive}
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-lg-6">
+
+<div class="card">
+
+<div class="card-body">
+
+<h5>
+
+Missing Keywords
+
+</h5>
+
+${missing}
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+`;
+
+}
+Resume Text Viewer
+Instead of dumping plain text, use highlighting:
+
+function resumeTextViewer(resume)
+{
+    return `
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Extracted Resume</h5>
+            </div>
+            <div class="card-body">
+                <pre class="resume-text">
+${resume.text}
+                </pre>
+            </div>
+        </div>
+    `;
+}
+CSS
+.resume-text{
+
+white-space:pre-wrap;
+
+font-size:14px;
+
+line-height:1.8;
+
+max-height:700px;
+
+overflow:auto;
+
+background:#fafafa;
+
+padding:20px;
+
+border-radius:10px;
+
+}
+
+.timeline-item{
+
+border-left:3px solid #0d6efd;
+
+padding-left:20px;
+
+margin-bottom:25px;
+
+}
+
+.timeline-item::before{
+
+content:"";
+
+width:14px;
+
+height:14px;
+
+background:#0d6efd;
+
+border-radius:50%;
+
+display:block;
+
+margin-left:-28px;
+
+margin-bottom:10px;
+
+}
+Backend Recommendation
+Rather than sending only resume_text, define a structured object so the frontend stays simple:
+
+{
+  "resume": {
+    "summary": "...",
+    "skills": [],
+    "experience": [],
+    "education": [],
+    "certifications": [],
+    "languages": [],
+    "projects": [],
+    "text": "..."
+  }
+}
+This keeps parsing responsibilities on the backend, where they belong.
+
+Next (Part 7 – Recruitment Timeline & Activity)
+We'll build a professional applicant timeline showing:
+
+📄 Application submitted
+
+🤖 AI analysis completed
+
+👀 Recruiter viewed profile
+
+⭐ Shortlisted
+
+📅 Interview scheduled
+
+💬 Recruiter notes
+
+📧 Email history
+
+📱 WhatsApp communication
+
+🎯 Final hiring decision
+
+This timeline will give HR a complete history of the candidate in a single view.
+
+
+next
+
+Excellent. Now we move to the Recruitment Timeline & Activity Center.
+
+This is one of the most valuable features for recruiters because it shows everything that happened to an applicant in one place instead of opening multiple pages.
+
+Part 7 – Recruitment Timeline & Activity
+Enterprise Layout
+┌───────────────────────────────────────────────────────────────────────┐
+│ Applicant Timeline                                                    │
+├───────────────────────────────────────────────────────────────────────┤
+
+🟢 Application Submitted
+   12 Mar 2026 09:15 AM
+   Candidate applied through Careers Portal
+
+│
+│
+├───────────────────────────────────────────────────────────────────────
+
+🤖 AI Resume Parsed
+   12 Mar 2026 09:18 AM
+   Resume parsed successfully
+
+│
+│
+├───────────────────────────────────────────────────────────────────────
+
+🧠 AI Analysis Completed
+   12 Mar 2026 09:19 AM
+   Overall Score : 91%
+   Role : Laravel Developer
+
+│
+│
+├───────────────────────────────────────────────────────────────────────
+
+👤 Recruiter Viewed
+   Priya Sharma
+   12 Mar 2026
+
+│
+│
+├───────────────────────────────────────────────────────────────────────
+
+⭐ Shortlisted
+
+│
+│
+├───────────────────────────────────────────────────────────────────────
+
+📅 Interview Scheduled
+
+│
+│
+├───────────────────────────────────────────────────────────────────────
+
+🎯 Technical Round Completed
+
+│
+│
+├───────────────────────────────────────────────────────────────────────
+
+💼 HR Discussion
+
+│
+│
+├───────────────────────────────────────────────────────────────────────
+
+📧 Offer Sent
+
+│
+│
+└───────────────────────────────────────────────────────────────────────
+Backend JSON
+Instead of returning multiple APIs, create one timeline array.
+
+{
+    "timeline":[
+
+        {
+            "type":"application",
+
+            "title":"Application Submitted",
+
+            "description":"Applied through Careers Portal",
+
+            "user":"Candidate",
+
+            "date":"2026-03-12 09:15",
+
+            "status":"completed"
+        },
+
+        {
+            "type":"ai",
+
+            "title":"AI Analysis",
+
+            "description":"Overall Match Score 91%",
+
+            "user":"AI Engine",
+
+            "date":"2026-03-12 09:19",
+
+            "status":"completed"
+        },
+
+        {
+            "type":"shortlist",
+
+            "title":"Shortlisted",
+
+            "user":"HR Admin",
+
+            "date":"2026-03-14",
+
+            "status":"completed"
+        }
+
+    ]
+}
+renderTimeline()
+function renderTimeline(data)
+{
+
+    let html="";
+
+    (data.timeline || []).forEach(item=>{
+
+        html+=timelineCard(item);
+
+    });
+
+    $("#timelineTab").html(html);
+
+}
+Timeline Card
+function timelineCard(item)
+{
+
+    return `
+
+    <div class="timeline-card">
+
+        <div class="timeline-icon">
+
+            ${timelineIcon(item.type)}
+
+        </div>
+
+        <div class="timeline-content">
+
+            <div class="d-flex justify-content-between">
+
+                <h5>
+
+                    ${item.title}
+
+                </h5>
+
+                <small>
+
+                    ${item.date}
+
+                </small>
+
+            </div>
+
+            <div>
+
+                ${item.description}
+
+            </div>
+
+            <small class="text-muted">
+
+                ${item.user}
+
+            </small>
+
+        </div>
+
+    </div>
+
+    `;
+
+}
+Timeline Icons
+function timelineIcon(type)
+{
+
+switch(type){
+
+case "application":
+
+return `<i class="mdi mdi-file-document-outline"></i>`;
+
+case "ai":
+
+return `<i class="mdi mdi-robot"></i>`;
+
+case "shortlist":
+
+return `<i class="mdi mdi-account-check"></i>`;
+
+case "interview":
+
+return `<i class="mdi mdi-calendar"></i>`;
+
+case "offer":
+
+return `<i class="mdi mdi-briefcase-check"></i>`;
+
+case "reject":
+
+return `<i class="mdi mdi-close-circle"></i>`;
+
+default:
+
+return `<i class="mdi mdi-circle"></i>`;
+
+}
+
+}
+CSS
+.timeline-card{
+
+display:flex;
+
+margin-bottom:30px;
+
+position:relative;
+
+}
+
+.timeline-card::before{
+
+content:"";
+
+position:absolute;
+
+left:25px;
+
+top:55px;
+
+bottom:-30px;
+
+width:2px;
+
+background:#dee2e6;
+
+}
+
+.timeline-card:last-child::before{
+
+display:none;
+
+}
+
+.timeline-icon{
+
+width:50px;
+
+height:50px;
+
+border-radius:50%;
+
+background:#0d6efd;
+
+color:#fff;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+font-size:22px;
+
+margin-right:20px;
+
+flex-shrink:0;
+
+}
+
+.timeline-content{
+
+background:#fff;
+
+padding:20px;
+
+border-radius:12px;
+
+width:100%;
+
+box-shadow:0 3px 10px rgba(0,0,0,.08);
+
+}
+Activity Status Colours
+Instead of a single blue colour, colour-code the timeline based on status.
+
+completed → Green
+
+pending → Orange
+
+rejected → Red
+
+scheduled → Blue
+
+cancelled → Grey
+Example:
+
+function timelineColor(status)
+{
+
+switch(status){
+
+case "completed":
+
+return "success";
+
+case "pending":
+
+return "warning";
+
+case "rejected":
+
+return "danger";
+
+case "scheduled":
+
+return "primary";
+
+default:
+
+return "secondary";
+
+}
+
+}
+Use it in the icon:
+
+<div class="timeline-icon bg-${timelineColor(item.status)}">
+Enterprise Improvement
+Rather than storing only AI events, build the timeline from all recruitment activities, such as:
+
+Source	Timeline Event
+Applicant	Application submitted
+Resume Parser	Resume extracted
+AI Engine	AI analysis completed
+Recruiter	Viewed profile
+Recruiter	Added note
+Recruiter	Shortlisted
+Interview Module	Interview scheduled
+Interview Module	Interview completed
+Assessment	Assessment score received
+Offer Module	Offer generated
+Onboarding	Candidate joined
+This gives recruiters a complete history in one place and avoids searching across different modules.
+
+Part 8 – Enterprise Recruiter Collaboration Hub (Next)
+This section will transform your ATS into a true collaborative recruitment platform. It will include:
+
+👥 Internal recruiter notes with mentions (e.g. @HR Manager)
+
+⭐ Candidate rating (1–5 stars)
+
+📌 Sticky recruitment notes
+
+✅ Task checklist ("Verify documents", "Schedule L2 interview")
+
+📎 Attachments (JD, feedback forms, offer letters)
+
+🔔 Activity feed showing who did what and when
+
+📝 Interview feedback from multiple interviewers
+
+📧 Email and WhatsApp communication history
+
+🔒 Role-based visibility (HR, Manager, Admin)
+
+This is the type of functionality typically found in enterprise ATS products and will significantly improve collaboration during the hiring process.
+
+
+next
+
+Excellent. Now we move beyond a normal ATS.
+
+Most ATS systems stop at "timeline". Enterprise systems like Workday, Greenhouse, SuccessFactors, and Lever provide a Recruiter Workspace where HRs collaborate, leave notes, assign tasks, rate candidates, and track interview feedback.
+
+This is what we'll build.
+
+Part 8 – Recruiter Collaboration Hub
+Final UI
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Recruiter Collaboration                                           + Add Note │
+├──────────────────────────────────────────────────────────────────────────────┤
+
+Recruiter Rating
+
+★★★★★
+
+Overall Internal Rating : 4.6
+
+──────────────────────────────────────────────────────────────────────────────
+
+Recruiter Notes
+
+──────────────────────────────────────────────────────────────────────────────
+
+👤 Priya Sharma
+
+Strong Laravel knowledge.
+Need Docker verification.
+
+2 hours ago
+
+──────────────────────────────────────────────────────────────────────────────
+
+👤 Raj Kumar
+
+Communication is good.
+Technical interview recommended.
+
+Yesterday
+
+──────────────────────────────────────────────────────────────────────────────
+
+Tasks
+
+☑ Verify Resume
+
+☑ Verify Experience
+
+☐ Schedule Technical Interview
+
+☐ Collect Payslips
+
+☐ Verify PAN
+
+──────────────────────────────────────────────────────────────────────────────
+
+Interview Feedback
+
+Technical Round
+
+⭐⭐⭐⭐☆
+
+Good Laravel
+
+REST API Excellent
+
+Needs Redis
+
+──────────────────────────────────────────────────────────────────────────────
+
+Communication History
+
+📧 Email Sent
+
+📱 WhatsApp Sent
+
+☎ Recruiter Called
+
+──────────────────────────────────────────────────────────────────────────────
+
+Attachments
+
+Offer Letter
+
+Assessment PDF
+
+Resume
+
+Interview Feedback
+Database Structure
+Instead of storing everything in one table, normalize it.
+
+Recruiter Notes
+egc_recruitment_applicant_notes
+Column	Type
+id	bigint
+applicant_id	bigint
+recruiter_id	bigint
+note	longtext
+visibility	enum(hr,manager,admin)
+created_at	timestamp
+Recruiter Tasks
+egc_recruitment_applicant_tasks
+Column	Type
+id	bigint
+applicant_id	bigint
+title	varchar
+assigned_to	bigint
+due_date	datetime
+completed	tinyint
+Recruiter Ratings
+egc_recruitment_applicant_ratings
+Column	Type
+applicant_id	bigint
+recruiter_id	bigint
+rating	decimal(2,1)
+Interview Feedback
+egc_recruitment_interview_feedback
+Column	Type
+interview_id	bigint
+interviewer_id	bigint
+technical_score	int
+communication_score	int
+comments	longtext
+Backend API
+GET
+
+/hr-recruitment/applicant/{id}/collaboration
+Response
+
+{
+    "rating":4.6,
+
+    "notes":[
+
+        {
+
+            "user":"Priya Sharma",
+
+            "note":"Strong Laravel knowledge. Verify Docker.",
+
+            "time":"2 hours ago"
+
+        }
+
+    ],
+
+    "tasks":[
+
+        {
+
+            "title":"Schedule Technical Interview",
+
+            "completed":false
+
+        }
+
+    ],
+
+    "feedback":[
+
+        {
+
+            "round":"Technical",
+
+            "technical":92,
+
+            "communication":84,
+
+            "comment":"Excellent backend skills."
+
+        }
+
+    ],
+
+    "communications":[
+
+        {
+
+            "type":"Email",
+
+            "title":"Interview Invitation",
+
+            "date":"2026-06-15"
+
+        }
+
+    ]
+}
+Frontend
+function renderCollaboration(data)
+{
+    $("#collaborationTab").html(`
+
+        ${ratingCard(data)}
+
+        ${notesCard(data)}
+
+        ${taskCard(data)}
+
+        ${feedbackCard(data)}
+
+        ${communicationCard(data)}
+
+        ${attachmentCard(data)}
+
+    `);
+}
+Recruiter Rating
+function ratingCard(data)
+{
+return `
+
+<div class="card shadow-sm">
+
+<div class="card-body">
+
+<h5>
+
+Recruiter Rating
+
+</h5>
+
+<div class="display-5 text-warning">
+
+★★★★☆
+
+</div>
+
+<h3>
+
+${data.rating}/5
+
+</h3>
+
+</div>
+
+</div>
+
+`;
+}
+Recruiter Notes
+function notesCard(data)
+{
+
+let html="";
+
+(data.notes||[]).forEach(x=>{
+
+html+=`
+
+<div class="note-item">
+
+<div class="fw-bold">
+
+${x.user}
+
+</div>
+
+<div>
+
+${x.note}
+
+</div>
+
+<small>
+
+${x.time}
+
+</small>
+
+</div>
+
+`;
+
+});
+
+return `
+
+<div class="card mt-4">
+
+<div class="card-header">
+
+Recruiter Notes
+
+<button class="btn btn-sm btn-primary float-end">
+
+Add Note
+
+</button>
+
+</div>
+
+<div class="card-body">
+
+${html}
+
+</div>
+
+</div>
+
+`;
+
+}
+Tasks
+function taskCard(data)
+{
+
+let html="";
+
+(data.tasks||[]).forEach(x=>{
+
+html+=`
+
+<div class="form-check mb-2">
+
+<input
+
+class="form-check-input"
+
+type="checkbox"
+
+${x.completed?"checked":""}>
+
+<label>
+
+${x.title}
+
+</label>
+
+</div>
+
+`;
+
+});
+
+return `
+
+<div class="card mt-4">
+
+<div class="card-body">
+
+<h5>
+
+Recruiter Tasks
+
+</h5>
+
+${html}
+
+</div>
+
+</div>
+
+`;
+
+}
+Interview Feedback
+function feedbackCard(data)
+{
+
+let html="";
+
+(data.feedback||[]).forEach(x=>{
+
+html+=`
+
+<div class="feedback-box">
+
+<h6>
+
+${x.round}
+
+</h6>
+
+<div>
+
+Technical
+
+${x.technical}%
+
+</div>
+
+<div>
+
+Communication
+
+${x.communication}%
+
+</div>
+
+<div>
+
+${x.comment}
+
+</div>
+
+</div>
+
+`;
+
+});
+
+return `
+
+<div class="card mt-4">
+
+<div class="card-body">
+
+<h5>
+
+Interview Feedback
+
+</h5>
+
+${html}
+
+</div>
+
+</div>
+
+`;
+
+}
+Communication History
+function communicationCard(data)
+{
+
+let html="";
+
+(data.communications||[]).forEach(x=>{
+
+html+=`
+
+<tr>
+
+<td>
+
+${x.type}
+
+</td>
+
+<td>
+
+${x.title}
+
+</td>
+
+<td>
+
+${x.date}
+
+</td>
+
+</tr>
+
+`;
+
+});
+
+return `
+
+<div class="card mt-4">
+
+<div class="card-body">
+
+<h5>
+
+Communication History
+
+</h5>
+
+<table class="table">
+
+<thead>
+
+<tr>
+
+<th>Type</th>
+
+<th>Subject</th>
+
+<th>Date</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+${html}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+`;
+
+}
+CSS
+.note-item{
+    border-left:4px solid #0d6efd;
+    padding:12px 15px;
+    margin-bottom:15px;
+    background:#f8f9fa;
+    border-radius:8px;
+}
+
+.feedback-box{
+    background:#fff;
+    border:1px solid #dee2e6;
+    border-radius:10px;
+    padding:15px;
+    margin-bottom:15px;
+}
+Recommended Architecture
+Rather than creating separate AJAX calls for notes, tasks, ratings, and communication history, expose a single Applicant Workspace API:
+
+GET /hr-recruitment/applicant/{id}/workspace
+Example response:
+
+{
+    "candidate": {},
+    "ai": {},
+    "timeline": [],
+    "collaboration": {
+        "rating": 4.6,
+        "notes": [],
+        "tasks": [],
+        "feedback": [],
+        "communications": [],
+        "attachments": []
+    }
+}
+This reduces network requests, simplifies frontend state management, and gives you a single source of truth for the applicant workspace.
+
+Next (Part 9 – Analytics & Charts)
+The next module will add an executive analytics dashboard with:
+
+📊 Radial score gauges (Overall, ATS, Skills, Experience)
+
+🕸️ Radar chart for skill distribution
+
+📈 Experience timeline
+
+🥧 Skill composition donut chart
+
+📉 Missing keyword analysis
+
+🎯 Role match confidence visualization
+
+📋 Recruiter KPI summary cards
+
+This will provide recruiters with an at-a-glance visual assessment of each candidate.
+https://chatgpt.com/share/6a67ab57-6e1c-83ee-a815-d7812789fcf4
+
+<?php
+
+namespace App\Services;
+
+class PromptBuilderService
+{
+    /**
+     * Build Prompt for Role Matching
+     */
+    public function roleMatching(
+        string $resume,
+        array $roles
+    ): string {
+
+        $roles = json_encode(
+            $roles,
+            JSON_UNESCAPED_UNICODE
+        );
+
+        $resume = trim(
+            mb_substr($resume,0,6000)
+        );
+
+        return <<<PROMPT
+You are an advanced AI Recruitment ATS.
+
+You are NOT allowed to create your own roles.
+
+Match the candidate ONLY against the supplied roles.
+
+Rules:
+
+1. Use ONLY role_id values provided.
+2. Never invent a role.
+3. Return maximum 3 roles.
+4. Sort by confidence descending.
+5. Confidence must be between 0 and 100.
+6. Consider:
+   - Job Titles
+   - Skills
+   - Technologies
+   - Responsibilities
+   - Experience
+   - Domain
+7. Ignore formatting mistakes.
+8. Return JSON ONLY.
+
+Available Roles
+
+$roles
+
+Candidate Resume
+
+$resume
+
+Output
+
+{
+    "matches":[
+        {
+            "role_id":1,
+            "confidence":97,
+            "reason":"Primary skills strongly match this role."
+        },
+        {
+            "role_id":5,
+            "confidence":88,
+            "reason":"Secondary match."
+        }
+    ]
+}
+PROMPT;
+
+    }
+
+    /**
+     * Resume Summary
+     */
+    public function resumeSummary(
+        string $resume
+    ): string {
+
+        return <<<PROMPT
+Summarize this resume.
+
+Return JSON only.
+
+{
+    "summary":"",
+    "experience_years":"",
+    "education":"",
+    "strengths":[]
+}
+
+Resume
+
+$resume
+PROMPT;
+
+    }
+
+    /**
+     * Skill Extraction
+     */
+    public function skillExtraction(
+        string $resume
+    ): string {
+
+        return <<<PROMPT
+Extract all technical and non-technical skills.
+
+Return JSON only.
+
+{
+    "technical_skills":[],
+    "soft_skills":[]
+}
+
+Resume
+
+$resume
+PROMPT;
+
+    }
+
+    /**
+     * Experience Extraction
+     */
+    public function experienceExtraction(
+        string $resume
+    ): string {
+
+        return <<<PROMPT
+Extract work experience.
+
+Return JSON only.
+
+{
+   "experience":[
+      {
+         "company":"",
+         "designation":"",
+         "duration":"",
+         "skills":[]
+      }
+   ]
+}
+
+Resume
+
+$resume
+PROMPT;
+
+    }
+
+    /**
+     * Interview Questions
+     */
+    public function interviewQuestions(
+        string $resume,
+        string $role
+    ): string {
+
+        return <<<PROMPT
+Generate 10 interview questions.
+
+Role
+
+$role
+
+Resume
+
+$resume
+
+Return JSON only.
+
+{
+    "questions":[]
+}
+PROMPT;
+
+    }
+
+    /**
+     * Resume Score
+     */
+    public function resumeScore(
+        string $resume
+    ): string {
+
+        return <<<PROMPT
+Score the resume out of 100.
+
+Return JSON only.
+
+{
+    "score":0,
+    "remarks":""
+}
+
+Resume
+
+$resume
+PROMPT;
+
+    }
+/**
+ * Batch Role Matching + ATS Resume Evaluation
+ */
+public function batchRoleMatchingOLd(
+    array $applicants,
+    array $roles
+): string {
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Prepare Applicants
+    |--------------------------------------------------------------------------
+    */
+
+    $resumeData = [];
+
+
+    foreach ($applicants as $row) {
+
+
+        $resumeData[] = [
+
+            "applicant_id"=>$row['sno'],
+
+            "resume"=>trim(
+                mb_substr(
+                    $row['resume'],
+                    0,
+                    5000
+                )
+            )
+
+        ];
+
+    }
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Roles JSON
+    |--------------------------------------------------------------------------
+    */
+
+    $rolesJson = json_encode(
+
+        $roles,
+
+        JSON_PRETTY_PRINT |
+        JSON_UNESCAPED_UNICODE
+
+    );
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Resume JSON
+    |--------------------------------------------------------------------------
+    */
+
+    $resumeJson = json_encode(
+
+        $resumeData,
+
+        JSON_PRETTY_PRINT |
+        JSON_UNESCAPED_UNICODE
+
+    );
+
+
+
+return <<<PROMPT
+
+You are an Enterprise AI Recruitment ATS System.
+
+SYSTEM MESSAGE:
+
+You are a JSON API service.
+
+Your output is consumed by PHP json_decode().
+
+You MUST never talk to the user.
+
+You MUST never explain your answer.
+
+Only return machine readable JSON.
+
+You act as both:
+
+1. ATS Resume Screening Engine
+2. Senior HR Recruiter
+
+
+Your task:
+
+For every applicant:
+
+A) Match the resume with suitable job roles.
+
+B) Generate overall resume ATS evaluation.
+
+
+
+===========================
+ROLE MATCHING RULES
+===========================
+
+
+1. Use ONLY supplied role_id.
+2. Never create new roles.
+3. Never modify role_id.
+4. Maximum 3 role matches.
+5. Sort confidence highest first.
+6. Confidence must be 0-100.
+7. Every applicant must return matches.
+
+
+
+===========================
+ATS EVALUATION RULES
+===========================
+
+
+Evaluate the COMPLETE resume.
+
+Do NOT evaluate separately for each role.
+
+
+Generate:
+
+
+1. Overall Match Score
+2. ATS Keyword Match Score
+3. Skills Alignment Score
+4. Experience Relevance Score
+5. Impact & Achievement Score
+
+(Check measurable achievements:
+%, numbers, revenue, efficiency, growth)
+
+6. Role Responsibility Match Score
+
+
+Also identify:
+
+- Missing keywords
+- Candidate strengths
+- Candidate weaknesses
+- Resume improvements
+- Achievement focused bullet rewrites
+- Professional summary
+
+
+
+===========================
+CRITICAL OUTPUT RULES
+===========================
+
+
+FOLLOW THESE RULES STRICTLY:
+
+
+1. RETURN ONLY ONE JSON OBJECT.
+
+2. DO NOT RETURN MULTIPLE JSON OBJECTS.
+
+3. DO NOT CREATE SEPARATE OUTPUT FOR EACH APPLICANT.
+
+4. DO NOT WRITE:
+   Applicant 1:
+   Applicant 2:
+   Candidate 1:
+   Candidate 2:
+
+5. DO NOT ADD:
+   - explanations
+   - notes
+   - comments
+   - markdown
+   - ```json blocks
+
+6. The entire response must start with {
+
+7. The entire response must end with }
+
+8. Every applicant must be inside the SAME "results" array.
+
+9. Maintain applicant_id exactly as provided.
+
+10. If any applicant has no suitable role, still return:
+
+{
+ "matches":[]
+}
+
+11. Never remove any applicant from results.
+
+12. JSON keys must remain exactly:
+    results
+    applicant_id
+    matches
+    role_id
+    confidence
+    reason
+    ai_response
+
+
+YOUR RESPONSE WILL BE PARSED DIRECTLY USING JSON DECODER.
+ANY TEXT OUTSIDE JSON WILL CAUSE FAILURE.
+
+
+AVAILABLE ROLES:
+
+
+$rolesJson
+
+
+
+APPLICANTS:
+
+
+$resumeJson
+
+
+
+OUTPUT FORMAT:
+
+
+{
+"results":[
+
+{
+
+"applicant_id":"11",
+
+
+"matches":[
+
+{
+"role_id":1,
+"confidence":95,
+"reason":"Strong skill match"
+}
+
+],
+
+
+
+"ai_response":{
+
+"overall_match_score":0,
+
+"ats_keyword_match_score":0,
+
+"skills_alignment_score":0,
+
+"experience_relevance_score":0,
+
+"impact_metrics_score":0,
+
+"role_responsibility_match_score":0,
+
+
+"missing_keywords":[],
+
+"strengths":[],
+
+"weaknesses":[],
+
+"resume_improvements":[],
+
+"rewritten_bullets":[],
+
+"optimized_summary":""
+
+}
+
+}
+
+]
+
+}
+
+
+PROMPT;
+
+}
+public function batchRoleMatching(
+    array $applicants,
+    array $roles
+): string {
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Prepare Applicants
+    |--------------------------------------------------------------------------
+    */
+
+    $resumeData = [];
+
+
+    foreach ($applicants as $row) {
+
+
+        $resumeData[] = [
+
+            "applicant_id"=>$row['sno'],
+
+            "resume"=>trim(
+                mb_substr(
+                    $row['resume'],
+                    0,
+                    5000
+                )
+            )
+
+        ];
+
+    }
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Roles JSON
+    |--------------------------------------------------------------------------
+    */
+
+    $rolesJson = json_encode(
+
+        $roles,
+
+        JSON_PRETTY_PRINT |
+        JSON_UNESCAPED_UNICODE
+
+    );
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Resume JSON
+    |--------------------------------------------------------------------------
+    */
+
+    $resumeJson = json_encode(
+
+        $resumeData,
+
+        JSON_PRETTY_PRINT |
+        JSON_UNESCAPED_UNICODE
+
+    );
+
+
+
+return <<<PROMPT
+
+You are Enterprise Recruitment ATS AI Version 1.
+
+SYSTEM ROLE
+
+You are an internal Recruitment Intelligence Engine.
+
+Your output is consumed directly by a Laravel backend using json_decode().
+
+You MUST return ONLY one valid JSON object.
+
+Never return markdown.
+
+Never return explanations.
+
+Never return comments.
+
+Never return notes.
+
+Never return code fences.
+
+Never return additional text.
+
+Your first character MUST be {
+
+Your last character MUST be }
+
+==================================================
+PRIMARY OBJECTIVE
+==================================================
+
+For EVERY applicant:
+
+1. Analyse the complete resume.
+
+2. Match ONLY against the supplied company job roles.
+
+3. Produce a detailed ATS recruiter evaluation.
+
+==================================================
+IMPORTANT ROLE MATCHING RULES
+==================================================
+
+The supplied roles represent ALL available roles in the company.
+
+You are NOT allowed to invent roles.
+
+You are NOT allowed to modify role_id.
+
+You are NOT allowed to guess a role.
+
+If none of the supplied roles are suitable,
+
+Return
+
+"matches":[]
+
+This is a VALID response.
+
+Never assign an unrelated role simply because it is the closest one.
+
+Match ONLY when the resume clearly satisfies the role.
+
+Evaluate using
+
+• Current Job Title
+• Previous Job Titles
+• Skills
+• Programming Languages
+• Frameworks
+• Databases
+• Cloud Platforms
+• DevOps
+• Certifications
+• Responsibilities
+• Domain Knowledge
+• Industry Experience
+• Seniority
+• Education
+• Years of Experience
+
+Confidence Rules
+
+95-100
+Outstanding fit
+
+85-94
+Strong fit
+
+70-84
+Good fit
+
+60-69
+Possible fit
+
+Below 60
+Do NOT return the role.
+
+Maximum 1 role.
+
+If confidence is below 60
+
+Return
+
+"matches":[]
+
+Reason must be less than 30 words.
+
+==================================================
+ATS EVALUATION
+==================================================
+
+Evaluate the entire resume.
+
+Do NOT evaluate against a specific role.
+
+Generate objective recruiter feedback.
+
+Scores must be between 0 and 100.
+
+Generate
+
+overall_match_score
+
+ats_keyword_match_score
+
+skills_alignment_score
+
+experience_relevance_score
+
+impact_metrics_score
+
+role_responsibility_match_score
+
+==================================================
+IMPACT ANALYSIS
+==================================================
+
+Check whether the resume contains measurable achievements.
+
+Examples
+
+Reduced costs
+
+Increased revenue
+
+Improved performance
+
+Improved productivity
+
+Automation
+
+Leadership
+
+Team size
+
+KPIs
+
+Awards
+
+Percentages
+
+Metrics
+
+==================================================
+MISSING KEYWORDS
+==================================================
+
+Return only important missing technical or domain keywords.
+
+Do not invent irrelevant keywords.
+
+Maximum 15 keywords.
+
+==================================================
+STRENGTHS
+==================================================
+
+Return 5 to 8 recruiter observations.
+
+Examples
+
+Strong backend experience
+
+Leadership
+
+Enterprise projects
+
+Cloud exposure
+
+Problem solving
+
+Team collaboration
+
+Architecture knowledge
+
+==================================================
+WEAKNESSES
+==================================================
+
+Return factual weaknesses only.
+
+Do not insult the candidate.
+
+Examples
+
+No cloud exposure
+
+No testing experience
+
+No measurable achievements
+
+Short employment duration
+
+Missing certifications
+
+==================================================
+RESUME IMPROVEMENTS
+==================================================
+
+Return practical recruiter recommendations.
+
+Maximum 8 items.
+
+Examples
+
+Add measurable achievements
+
+Improve project descriptions
+
+Include GitHub
+
+Add certifications
+
+Improve ATS keywords
+
+==================================================
+REWRITTEN BULLETS
+==================================================
+
+Rewrite ONLY weak resume bullets.
+
+Convert them into strong ATS-friendly statements.
+
+Maximum 5 bullets.
+
+==================================================
+OPTIMIZED SUMMARY
+==================================================
+
+Generate a professional ATS summary.
+
+Maximum 120 words.
+
+==================================================
+GENERAL RULES
+==================================================
+
+Do NOT hallucinate.
+
+Do NOT invent companies.
+
+Do NOT invent projects.
+
+Do NOT invent skills.
+
+Do NOT invent experience.
+
+If information is missing,
+
+State it as a weakness.
+
+Never assume.
+
+==================================================
+JSON RULES
+==================================================
+
+Return EXACTLY
+
+{
+  "results":[]
+}
+
+Every applicant MUST appear.
+
+Never skip applicants.
+
+Maintain applicant_id exactly.
+
+Maintain role_id exactly.
+
+Use EXACT key names.
+
+results
+
+applicant_id
+
+matches
+
+role_id
+
+confidence
+
+reason
+
+ai_response
+
+overall_match_score
+
+ats_keyword_match_score
+
+skills_alignment_score
+
+experience_relevance_score
+
+impact_metrics_score
+
+role_responsibility_match_score
+
+missing_keywords
+
+strengths
+
+weaknesses
+
+resume_improvements
+
+rewritten_bullets
+
+optimized_summary
+
+==================================================
+AVAILABLE COMPANY ROLES
+==================================================
+
+$rolesJson
+
+==================================================
+APPLICANTS
+==================================================
+
+$resumeJson
+
+==================================================
+OUTPUT FORMAT
+==================================================
+
+{
+  "results":[
+    {
+      "applicant_id":"11",
+
+      "matches":[
+        {
+          "role_id":5,
+          "confidence":91,
+          "reason":"Strong Laravel, PHP and MySQL enterprise development experience."
+        }
+      ],
+
+      "ai_response":{
+
+        "overall_match_score":91,
+
+        "ats_keyword_match_score":87,
+
+        "skills_alignment_score":93,
+
+        "experience_relevance_score":90,
+
+        "impact_metrics_score":74,
+
+        "role_responsibility_match_score":89,
+
+        "missing_keywords":[
+            "Docker",
+            "Redis",
+            "CI/CD"
+        ],
+
+        "strengths":[
+            "...",
+            "...",
+            "..."
+        ],
+
+        "weaknesses":[
+            "...",
+            "...",
+            "..."
+        ],
+
+        "resume_improvements":[
+            "...",
+            "...",
+            "..."
+        ],
+
+        "rewritten_bullets":[
+            "...",
+            "...",
+            "..."
+        ],
+
+        "optimized_summary":"..."
+      }
+
+    }
+  ]
+}
+
+
+PROMPT;
+
+}
+
+
+
+}
+
+
+
