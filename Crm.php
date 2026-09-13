@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\dashboard;
+https://chatgpt.com/share/6aa70a53-a06c-83ee-af07-57d6567ff351
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
